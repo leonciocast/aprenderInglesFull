@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import AdminShell from '../AdminShell';
 
 type Course = {
   id: number;
@@ -136,15 +137,12 @@ export default function EnrollmentsAdminPage() {
   const selectedCourse = courses.find(course => course.id === selectedCourseId);
 
   return (
-    <main className="ui-shell ui-shell--light">
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-      <div className="ui-tag" style={{ marginBottom: 10 }}>Administración</div>
-      <h1 style={{ fontSize: 28, marginBottom: 8, color: '#192335' }}>Enrollments</h1>
-      <p className="ui-muted" style={{ marginBottom: 16, maxWidth: 720 }}>
-        Assign students to courses in a dedicated module.
-      </p>
-
-      <div style={{ marginBottom: 16 }}>
+    <AdminShell
+      title="Enrollments"
+      description="Assign students to courses and review enrollment lists."
+    >
+      <section className="admin-panel">
+        <div style={{ marginBottom: 16 }}>
         <label>
           Admin password:{' '}
           <input
@@ -364,7 +362,7 @@ export default function EnrollmentsAdminPage() {
           </div>
         </div>
       )}
-      </div>
-    </main>
+      </section>
+    </AdminShell>
   );
 }

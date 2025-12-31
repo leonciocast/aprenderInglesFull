@@ -50,58 +50,47 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="ui-shell ui-shell--light" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <main className="auth-page ui-shell ui-shell--light">
       <form
         onSubmit={handleSubmit}
-        className="ui-card ui-card--glass"
-        style={{ width: '100%', maxWidth: 420, padding: 28 }}
+        className="auth-card ui-card"
       >
-        <span className="ui-tag" style={{ marginBottom: 10 }}>Nuevo acceso</span>
-        <h1 style={{ fontSize: 26, marginBottom: 6 }}>Crear cuenta</h1>
-        <p className="ui-muted" style={{ marginBottom: 16 }}>
-          Regístrate para acceder a tus cursos.
-        </p>
+        <span className="auth-pill">Nuevo acceso</span>
+        <h1>Crear cuenta</h1>
+        <p className="auth-subtitle">Regístrate para acceder a tus cursos.</p>
 
         <input
           type="text"
           placeholder="Nombre"
           value={name}
           onChange={e => setName(e.target.value)}
-          className="ui-input"
-          style={{ marginBottom: 10 }}
+          className="auth-input"
         />
         <input
           type="email"
           placeholder="Correo"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          className="ui-input"
-          style={{ marginBottom: 10 }}
+          className="auth-input"
         />
-        <div className="ui-muted" style={{ fontSize: 12, marginBottom: 12 }}>
-          Usa un correo válido, por ejemplo: nombre@dominio.com
-        </div>
+        <div className="auth-help">Usa un correo válido, por ejemplo: nombre@dominio.com</div>
         <input
           type="password"
           placeholder="Contraseña (mín. 8)"
           value={password}
           onChange={e => setPassword(e.target.value)}
-          className="ui-input"
-          style={{ marginBottom: 6 }}
+          className="auth-input"
         />
-        <div className="ui-muted" style={{ fontSize: 12, marginBottom: 14 }}>
-          Mínimo 8 caracteres.
-        </div>
+        <div className="auth-help">Mínimo 8 caracteres.</div>
 
-        {error && <div style={{ color: '#f87171', marginBottom: 6 }}>{error}</div>}
-        {hint && <div style={{ color: '#fbbf24', marginBottom: 10 }}>{hint}</div>}
-        {message && <div style={{ color: '#34d399', marginBottom: 10 }}>{message}</div>}
+        {error && <div className="auth-error">{error}</div>}
+        {hint && <div className="auth-hint">{hint}</div>}
+        {message && <div className="auth-success">{message}</div>}
 
         <button
           type="submit"
           disabled={loading}
-          className="ui-button ui-button-primary"
-          style={{ width: '100%' }}
+          className="auth-submit"
         >
           {loading ? 'Enviando…' : 'Crear cuenta'}
         </button>
@@ -109,8 +98,7 @@ export default function RegisterPage() {
         <button
           type="button"
           onClick={() => router.push('/auth/login')}
-          className="ui-button ui-button-outline"
-          style={{ marginTop: 12, width: '100%' }}
+          className="auth-secondary auth-secondary--full"
         >
           Ya tengo cuenta
         </button>

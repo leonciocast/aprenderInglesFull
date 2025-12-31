@@ -1,119 +1,112 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { coerceRows, runBooktolQuery, sqlString } from '@/app/lib/booktol';
+import { getUserFromRequest } from '@/app/lib/session';
 
 export const runtime = 'nodejs';
 
-type BooktolAuthResponse = {
-  token?: string;
-  access_token?: string;
-};
-
-async function getBooktolToken() {
-  const baseUrl = process.env.BOOKTOL_BASE_URL;
-  const user = process.env.BOOKTOL_AUTH_USER;
-  const pass = process.env.BOOKTOL_AUTH_PASS;
-
-  if (!baseUrl || !user || !pass) {
-    throw new Error('Missing Booktol credentials');
-  }
-
-  const basic = Buffer.from(`${user}:${pass}`).toString('base64');
-  const res = await fetch(`${baseUrl.replace(/\/$/, '')}/auth`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${basic}`,
-      'User-Agent': 'BooktolClient/1.0 (Next.js)',
-      Accept: 'application/json',
-    },
-  });
-
-  const data = (await res.json()) as BooktolAuthResponse;
-  if (!res.ok) {
-    throw new Error(`Booktol auth failed: ${res.status}`);
-  }
-
-  const token = data.access_token ?? data.token;
-  if (!token) {
-    throw new Error('Booktol auth response missing token');
-  }
-
-  return token;
+function parseLessonId(req: NextRequest) {
+  const value = req.nextUrl.searchParams.get('lessonId');
+  return value ? Number(value) : NaN;
 }
 
-async function runBooktolQuery(sql: string) {
-  const baseUrl = process.env.BOOKTOL_BASE_URL;
-  if (!baseUrl) {
-    throw new Error('Missing Booktol base URL');
-  }
-
-  const token = await getBooktolToken();
-  const res = await fetch(`${baseUrl.replace(/\/$/, '')}/query`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'User-Agent': 'BooktolClient/1.0 (Next.js)',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify({ query: sql }),
-  });
-
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(`Booktol query failed: ${res.status}`);
-  }
-
-  return data;
+async function assertEnrollment(userId: number, lessonId: number) {
+  const sql = `
+    SELECT l.id
+    FROM lessons l
+    JOIN enrollments e ON e.course_id = l.course_id
+    WHERE l.id = ${lessonId} AND e.user_id = ${userId}
+    LIMIT 1
+  `;
+  const rows = coerceRows(await runBooktolQuery(sql));
+  return Boolean(rows[0]);
 }
 
-function sqlString(value: string) {
-  return value.replace(/'/g, "''");
+export async function GET(req: NextRequest) {
+  try {
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const lessonId = parseLessonId(req);
+    if (!Number.isFinite(lessonId)) {
+      return NextResponse.json({ error: 'Invalid lesson id' }, { status: 400 });
+    }
+
+    const enrolled = await assertEnrollment(Number(user.id), lessonId);
+    if (!enrolled) {
+      return NextResponse.json({ error: 'Not enrolled' }, { status: 403 });
+    }
+
+    const sql = `
+      SELECT note
+      FROM student_lesson_note
+      WHERE user_id = ${Number(user.id)} AND lesson_id = ${lessonId}
+      LIMIT 1
+    `;
+    const rows = coerceRows(await runBooktolQuery(sql));
+    return NextResponse.json({ note: rows[0]?.note || '' });
+  } catch (err: any) {
+    console.error('Lesson notes GET error:', err);
+    return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-  const note = String(body?.note || '');
-  const videoSrc = String(body?.videoSrc || '').trim();
-  const videoTitle = String(body?.videoTitle || '').trim();
-  const visitorId = String(body?.visitorId || '').trim();
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    if (!note.trim() || !videoSrc || !visitorId) {
-      return NextResponse.json({ error: 'Missing note or video source' }, { status: 400 });
+    const body = await req.json();
+    const note = String(body?.note || '');
+    const lessonId = Number(body?.lessonId);
+
+    if (!Number.isFinite(lessonId)) {
+      return NextResponse.json({ error: 'Invalid lesson id' }, { status: 400 });
     }
 
     if (note.length > 20000) {
       return NextResponse.json({ error: 'Note too long' }, { status: 400 });
     }
 
-    const userAgent = req.headers.get('user-agent') || '';
-    const forwardedFor = req.headers.get('x-forwarded-for') || '';
-    const ipAddress = forwardedFor.split(',')[0]?.trim() || '';
+    const enrolled = await assertEnrollment(Number(user.id), lessonId);
+    if (!enrolled) {
+      return NextResponse.json({ error: 'Not enrolled' }, { status: 403 });
+    }
+
+    if (!note.trim()) {
+      const deleteSql = `
+        DELETE FROM student_lesson_note
+        WHERE user_id = ${Number(user.id)} AND lesson_id = ${lessonId}
+      `;
+      await runBooktolQuery(deleteSql);
+      return NextResponse.json({ ok: true });
+    }
 
     const sql = `
-      INSERT INTO lesson_notes
-        (visitor_id, video_src, video_title, note, user_agent, ip_address)
+      INSERT INTO student_lesson_note
+        (user_id, lesson_id, note, created_at, updated_at)
       VALUES
         (
-          '${sqlString(visitorId)}',
-          '${sqlString(videoSrc)}',
-          ${videoTitle ? `'${sqlString(videoTitle)}'` : 'NULL'},
+          ${Number(user.id)},
+          ${lessonId},
           '${sqlString(note)}',
-          ${userAgent ? `'${sqlString(userAgent)}'` : 'NULL'},
-          ${ipAddress ? `'${sqlString(ipAddress)}'` : 'NULL'}
+          NOW(),
+          NOW()
         )
-      ON CONFLICT (visitor_id, video_src)
+      ON CONFLICT (user_id, lesson_id)
       DO UPDATE SET
         note = EXCLUDED.note,
-        video_title = EXCLUDED.video_title,
-        user_agent = EXCLUDED.user_agent,
-        ip_address = EXCLUDED.ip_address
+        updated_at = NOW()
     `;
 
     await runBooktolQuery(sql);
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
-    console.error('Lesson notes API error:', err);
+    console.error('Lesson notes POST error:', err);
     return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
   }
 }

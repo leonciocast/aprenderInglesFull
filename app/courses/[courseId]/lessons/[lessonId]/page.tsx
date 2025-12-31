@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 
 const SEEK_SECONDS = 10;
 const NOTE_KEY_PREFIX = 'lesson-note:';
-const VISITOR_ID_KEY = 'lesson-visitor-id';
 
 type Lesson = {
   id: number;
@@ -28,7 +27,6 @@ export default function CourseLessonPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasPreviewSeeked, setHasPreviewSeeked] = useState(false);
   const [lastSavedNote, setLastSavedNote] = useState('');
-  const [visitorId, setVisitorId] = useState('');
   const saveTimer = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -63,38 +61,56 @@ export default function CourseLessonPage() {
   }, [lesson]);
 
   useEffect(() => {
-    const existing = window.localStorage.getItem(VISITOR_ID_KEY);
-    if (existing) {
-      setVisitorId(existing);
-      return;
-    }
-    const generated = typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    window.localStorage.setItem(VISITOR_ID_KEY, generated);
-    setVisitorId(generated);
-  }, []);
+    if (!Number.isFinite(lessonId)) return;
+    const key = `${NOTE_KEY_PREFIX}${lessonId}`;
+    const cached = window.localStorage.getItem(key) || '';
+    setNote(cached);
+    setLastSavedNote('');
+
+    let cancelled = false;
+    fetch(`/uploader/api/lesson-notes?lessonId=${lessonId}`)
+      .then(async res => {
+        const data = await res.json();
+        if (res.status === 401) {
+          return { note: '' };
+        }
+        if (!res.ok) throw new Error(data?.error || 'Failed to load note');
+        return data;
+      })
+      .then(data => {
+        if (cancelled) return;
+        const serverNote = String(data?.note || '');
+        if (serverNote && serverNote !== cached) {
+          window.localStorage.setItem(key, serverNote);
+          setNote(serverNote);
+        }
+        if (serverNote) {
+          setLastSavedNote(serverNote);
+        }
+      })
+      .catch(err => {
+        console.error('Load note error:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lessonId]);
 
   useEffect(() => {
-    if (!videoSrc) return;
-    const key = `${NOTE_KEY_PREFIX}${videoSrc}`;
-    const saved = window.localStorage.getItem(key);
-    setNote(saved || '');
-  }, [videoSrc]);
-
-  useEffect(() => {
-    if (!videoSrc) return;
-    const key = `${NOTE_KEY_PREFIX}${videoSrc}`;
+    if (!Number.isFinite(lessonId)) return;
+    const key = `${NOTE_KEY_PREFIX}${lessonId}`;
     if (note.trim()) {
       window.localStorage.setItem(key, note);
     } else {
       window.localStorage.removeItem(key);
     }
-  }, [note, videoSrc]);
+  }, [note, lessonId]);
 
   const sendNote = (noteToSave: string, force = false) => {
-    if (!noteToSave.trim() || !visitorId || !videoSrc) return;
+    if (!Number.isFinite(lessonId)) return;
     if (!force && noteToSave === lastSavedNote) return;
+    if (!noteToSave.trim() && !lastSavedNote.trim() && !force) return;
 
     fetch('/uploader/api/lesson-notes', {
       method: 'POST',
@@ -104,9 +120,7 @@ export default function CourseLessonPage() {
       keepalive: true,
       body: JSON.stringify({
         note: noteToSave,
-        videoSrc,
-        videoTitle: lesson?.title || undefined,
-        visitorId,
+        lessonId,
       }),
     })
       .then(res => {
@@ -121,7 +135,8 @@ export default function CourseLessonPage() {
   };
 
   useEffect(() => {
-    if (!note.trim() || !visitorId || !videoSrc) return;
+    if (!Number.isFinite(lessonId)) return;
+    if (!note.trim() && !lastSavedNote.trim()) return;
 
     if (saveTimer.current) {
       window.clearTimeout(saveTimer.current);
@@ -136,7 +151,7 @@ export default function CourseLessonPage() {
         window.clearTimeout(saveTimer.current);
       }
     };
-  }, [note, visitorId, videoSrc, lastSavedNote, lesson?.title]);
+  }, [note, lessonId, lastSavedNote]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -155,7 +170,7 @@ export default function CourseLessonPage() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [note, visitorId, videoSrc, lastSavedNote, lesson?.title]);
+  }, [note, lessonId, lastSavedNote]);
 
   const handleTogglePlay = () => {
     const el = videoRef.current;

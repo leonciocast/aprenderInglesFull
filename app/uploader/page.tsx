@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import AdminShell from '../admin/AdminShell';
 
 type LocalFile = {
   file: File;
@@ -122,286 +123,145 @@ export default function UploaderPage() {
   };
 
   return (
-    <main
-      style={{
-        padding: 24,
-        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-        maxWidth: 900,
-        margin: '0 auto',
-        minHeight: '100vh',
-        backgroundColor: '#020617', // dark background
-        color: '#e5e7eb',
-      }}
+    <AdminShell
+      title="Lesson PDF Uploader"
+      description="Upload lesson PDFs to S3/CloudFront and generate shareable links."
     >
-      <h1 style={{ fontSize: 28, marginBottom: 8 }}>Lesson PDF Uploader</h1>
-      <p style={{ marginBottom: 16, maxWidth: 640 }}>
-        Upload lesson PDFs to S3 / CloudFront and get shareable links for your social media
-        videos.
-      </p>
+      <section className="admin-panel uploader-panel">
+        <div className="uploader-toolbar">
+          <label className="uploader-label">
+            Admin password:
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="ui-input uploader-input"
+            />
+          </label>
+          <label className="uploader-label">
+            PDF files:
+            <input
+              type="file"
+              multiple
+              accept="application/pdf"
+              onChange={handleFileChange}
+              className="uploader-file"
+            />
+          </label>
+        </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <label>
-          Admin password:{' '}
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            style={{
-              padding: 6,
-              minWidth: 220,
-              borderRadius: 6,
-              border: '1px solid #4b5563',
-              backgroundColor: '#020617',
-              color: '#e5e7eb',
-            }}
-          />
-        </label>
-      </div>
+        {files.length > 0 && (
+          <section className="uploader-section">
+            <h3>Rename files & set lesson titles:</h3>
+            {files.map((item, idx) => (
+              <div key={idx} className="uploader-card ui-card">
+                <div className="uploader-meta">
+                  Original: <strong>{item.file.name}</strong>
+                </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <input
-          type="file"
-          multiple
-          accept="application/pdf"
-          onChange={handleFileChange}
-          style={{ color: '#e5e7eb' }}
-        />
-      </div>
+                <label className="uploader-label">
+                  Final filename (S3, underscores only):
+                  <input
+                    type="text"
+                    value={item.customName}
+                    onChange={e => handleNameChange(idx, e.target.value)}
+                    className="ui-input"
+                  />
+                </label>
 
-      {files.length > 0 && (
-        <section style={{ marginBottom: 24 }}>
-          <h3 style={{ marginBottom: 8 }}>Rename files & set lesson titles:</h3>
-          {files.map((item, idx) => (
-            <div
-              key={idx}
-              style={{
-                marginBottom: 12,
-                padding: 10,
-                border: '1px solid #374151',
-                borderRadius: 8,
-                backgroundColor: '#020617',
-              }}
-            >
-              <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 4 }}>
-                Original: <strong>{item.file.name}</strong>
+                <label className="uploader-label">
+                  Lesson title (for <code>?title=</code> in the link):
+                  <input
+                    type="text"
+                    value={item.lessonTitle}
+                    onChange={e => handleTitleChange(idx, e.target.value)}
+                    className="ui-input"
+                  />
+                </label>
               </div>
-
-              <label style={{ fontSize: 14, display: 'block', marginBottom: 4 }}>
-                Final filename (S3, underscores only):
-                <br />
-                <input
-                  type="text"
-                  value={item.customName}
-                  onChange={e => handleNameChange(idx, e.target.value)}
-                  style={{
-                    padding: 6,
-                    minWidth: 320,
-                    marginTop: 4,
-                    borderRadius: 6,
-                    border: '1px solid #4b5563',
-                    backgroundColor: '#020617',
-                    color: '#e5e7eb',
-                  }}
-                />
-              </label>
-
-              <label style={{ fontSize: 14, display: 'block', marginTop: 8 }}>
-                Lesson title (for <code>?title=</code> in the link):
-                <br />
-                <input
-                  type="text"
-                  value={item.lessonTitle}
-                  onChange={e => handleTitleChange(idx, e.target.value)}
-                  style={{
-                    padding: 6,
-                    minWidth: 320,
-                    marginTop: 4,
-                    borderRadius: 6,
-                    border: '1px solid #4b5563',
-                    backgroundColor: '#020617',
-                    color: '#e5e7eb',
-                  }}
-                />
-              </label>
-            </div>
-          ))}
-
-          <button
-            onClick={handleUpload}
-            disabled={loading || !password || files.length === 0}
-            style={{
-              marginTop: 8,
-              padding: '10px 20px',
-              borderRadius: 9999,
-              border: 'none',
-              backgroundColor: '#2563eb',
-              color: 'white',
-              fontWeight: 600,
-              cursor: loading || !password || files.length === 0 ? 'not-allowed' : 'pointer',
-              opacity: loading || !password || files.length === 0 ? 0.6 : 1,
-            }}
-          >
-            {loading ? 'Uploading…' : 'Upload to S3'}
-          </button>
-        </section>
-      )}
-
-      {error && (
-        <p style={{ color: '#f87171', marginTop: 8 }}>
-          Error: {error}
-        </p>
-      )}
-
-      {uploaded.length > 0 && (
-        <section style={{ marginTop: 24 }}>
-          <h3 style={{ color: '#ffffff', marginBottom: 8 }}>Uploaded files</h3>
-          <ul style={{ paddingLeft: 18 }}>
-            {uploaded.map((u, idx) => (
-              <li key={idx} style={{ marginBottom: 20 }}>
-                <div style={{ color: '#ffffff', fontSize: 16 }}>
-                  <strong>{u.finalName}</strong>
-                  {u.lessonTitle && (
-                    <>
-                      {' '}
-                      — <em>{u.lessonTitle}</em>
-                    </>
-                  )}
-                </div>
-
-                {/* CloudFront URL (direct PDF) */}
-                <div style={{ marginTop: 6 }}>
-                  <div style={{ fontSize: 13, color: '#9ca3af' }}>PDF URL (CloudFront):</div>
-                  <code
-                    style={{
-                      display: 'block',
-                      background: '#1f2937',
-                      padding: '8px 10px',
-                      borderRadius: 6,
-                      color: '#ffffff',
-                      wordBreak: 'break-all',
-                      border: '1px solid #374151',
-                      fontSize: 14,
-                      marginTop: 4,
-                    }}
-                  >
-                    {u.url}
-                  </code>
-                  <div style={{ marginTop: 8, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    <a
-                      href={u.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{
-                        color: '#93c5fd',
-                        textDecoration: 'none',
-                        fontSize: 13,
-                        fontWeight: 600,
-                      }}
-                    >
-                      Open PDF
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewUrl(u.url)}
-                      style={{
-                        border: '1px solid #2563eb',
-                        backgroundColor: '#0b1220',
-                        color: '#93c5fd',
-                        padding: '4px 10px',
-                        borderRadius: 9999,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Preview here
-                    </button>
-                  </div>
-                </div>
-
-                {/* Social / landing page URL */}
-                {u.socialUrl && (
-                  <div style={{ marginTop: 10 }}>
-                    <div style={{ fontSize: 13, color: '#9ca3af' }}>
-                      Landing page URL for social:
-                    </div>
-                    <code
-                      style={{
-                        display: 'block',
-                        background: '#312e81',
-                        padding: '8px 10px',
-                        borderRadius: 6,
-                        color: '#f9fafb',
-                        wordBreak: 'break-all',
-                        border: '1px solid #4338ca',
-                        fontSize: 14,
-                        marginTop: 4,
-                      }}
-                    >
-                      {u.socialUrl}
-                    </code>
-                  </div>
-                )}
-              </li>
             ))}
-          </ul>
-        </section>
-      )}
+
+            <button
+              onClick={handleUpload}
+              disabled={loading || !password || files.length === 0}
+              className="ui-button ui-button-primary"
+            >
+              {loading ? 'Uploading…' : 'Upload to S3'}
+            </button>
+          </section>
+        )}
+
+        {error && <p className="uploader-error">Error: {error}</p>}
+
+        {uploaded.length > 0 && (
+          <section className="uploader-section">
+            <h3>Uploaded files</h3>
+            <ul className="uploader-list">
+              {uploaded.map((u, idx) => (
+                <li key={idx} className="uploader-list__item">
+                  <div className="uploader-title">
+                    <strong>{u.finalName}</strong>
+                    {u.lessonTitle && (
+                      <>
+                        {' '}
+                        — <em>{u.lessonTitle}</em>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="uploader-block">
+                    <div className="uploader-label-text">PDF URL (CloudFront):</div>
+                    <code className="uploader-code">{u.url}</code>
+                    <div className="uploader-actions">
+                      <a
+                        href={u.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="uploader-link"
+                      >
+                        Open PDF
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewUrl(u.url)}
+                        className="ui-button ui-button-outline uploader-preview"
+                      >
+                        Preview here
+                      </button>
+                    </div>
+                  </div>
+
+                  {u.socialUrl && (
+                    <div className="uploader-block">
+                      <div className="uploader-label-text">Landing page URL for social:</div>
+                      <code className="uploader-code uploader-code--alt">{u.socialUrl}</code>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </section>
 
       {previewUrl && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(2, 6, 23, 0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-            zIndex: 50,
-          }}
-        >
-          <div
-            style={{
-              width: '100%',
-              maxWidth: 960,
-              backgroundColor: '#0b1220',
-              borderRadius: 12,
-              border: '1px solid #1f2937',
-              padding: 12,
-              color: '#e5e7eb',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ fontSize: 13, color: '#94a3b8' }}>{previewUrl}</div>
+        <div className="uploader-modal">
+          <div className="uploader-modal__content">
+            <div className="uploader-modal__header">
+              <div className="uploader-modal__url">{previewUrl}</div>
               <button
                 type="button"
                 onClick={() => setPreviewUrl(null)}
-                style={{
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  color: '#9ca3af',
-                  fontSize: 18,
-                  cursor: 'pointer',
-                }}
+                className="uploader-modal__close"
                 aria-label="Close preview"
               >
                 ✕
               </button>
             </div>
-            <iframe
-              src={previewUrl}
-              style={{
-                width: '100%',
-                height: '70vh',
-                border: '1px solid #1f2937',
-                borderRadius: 10,
-                backgroundColor: '#0f172a',
-              }}
-            />
+            <iframe src={previewUrl} className="uploader-modal__frame" />
           </div>
         </div>
       )}
-    </main>
+    </AdminShell>
   );
 }

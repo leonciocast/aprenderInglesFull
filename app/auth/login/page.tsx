@@ -51,59 +51,53 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="ui-shell ui-shell--light" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <main className="auth-page ui-shell ui-shell--light">
       <form
         onSubmit={handleSubmit}
-        className="ui-card ui-card--glass"
-        style={{ width: '100%', maxWidth: 420, padding: 28 }}
+        className="auth-card ui-card"
       >
-        <span className="ui-tag" style={{ marginBottom: 10 }}>Bienvenido</span>
-        <h1 style={{ fontSize: 26, marginBottom: 6 }}>Iniciar sesión</h1>
-        <p className="ui-muted" style={{ marginBottom: 16 }}>Accede a tus cursos.</p>
+        <span className="auth-pill">Bienvenido</span>
+        <h1>Iniciar sesión</h1>
+        <p className="auth-subtitle">Accede a tus cursos.</p>
 
         <input
           type="email"
           placeholder="Correo"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          className="ui-input"
-          style={{ marginBottom: 10 }}
+          className="auth-input"
         />
         <input
           type="password"
           placeholder="Contraseña"
           value={password}
           onChange={e => setPassword(e.target.value)}
-          className="ui-input"
-          style={{ marginBottom: 14 }}
+          className="auth-input"
         />
 
-        {error && <div style={{ color: '#f87171', marginBottom: 6 }}>{error}</div>}
-        {hint && <div style={{ color: '#f59e0b', marginBottom: 10 }}>{hint}</div>}
+        {error && <div className="auth-error">{error}</div>}
+        {hint && <div className="auth-hint">{hint}</div>}
 
         <button
           type="submit"
           disabled={loading}
-          className="ui-button ui-button-primary"
-          style={{ width: '100%' }}
+          className="auth-submit"
         >
           {loading ? 'Entrando…' : 'Entrar'}
         </button>
 
-        <div style={{ marginTop: 12, display: 'flex', gap: 10 }}>
+        <div className="auth-actions">
           <button
             type="button"
             onClick={() => router.push('/auth/register')}
-            className="ui-button ui-button-outline"
-            style={{ flex: 1 }}
+            className="auth-secondary"
           >
             Crear cuenta
           </button>
           <button
             type="button"
             onClick={() => router.push('/auth/forgot')}
-            className="ui-button ui-button-outline"
-            style={{ flex: 1 }}
+            className="auth-secondary"
           >
             Olvidé mi clave
           </button>

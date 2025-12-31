@@ -7,7 +7,6 @@ const DEFAULT_VIDEO_URL =
   'https://aprenderinglesfull-pdfs.s3.us-east-1.amazonaws.com/Website_hook.mp4';
 const SEEK_SECONDS = 10;
 const NOTE_KEY_PREFIX = 'lesson-note:';
-const VISITOR_ID_KEY = 'lesson-visitor-id';
 
 function LessonVideoContent() {
   const searchParams = useSearchParams();
@@ -17,7 +16,6 @@ function LessonVideoContent() {
   const [hasPreviewSeeked, setHasPreviewSeeked] = useState(false);
   const [lastSavedNote, setLastSavedNote] = useState('');
   const saveTimer = useRef<number | null>(null);
-  const [visitorId, setVisitorId] = useState('');
 
   const videoSrc = useMemo(() => {
     const src = searchParams.get('src');
@@ -28,43 +26,69 @@ function LessonVideoContent() {
 
   const title = 'Bienvenido.';
 
-  const videoTitleParam = useMemo(() => {
-    return searchParams.get('title') || '';
+  const lessonId = useMemo(() => {
+    const raw = searchParams.get('lessonId');
+    const value = raw ? Number(raw) : NaN;
+    return Number.isFinite(value) ? value : NaN;
   }, [searchParams]);
 
   useEffect(() => {
-    const key = `${NOTE_KEY_PREFIX}${videoSrc}`;
+    const key = Number.isFinite(lessonId)
+      ? `${NOTE_KEY_PREFIX}${lessonId}`
+      : `${NOTE_KEY_PREFIX}${videoSrc}`;
     const saved = window.localStorage.getItem(key);
     setNote(saved || '');
-  }, [videoSrc]);
+    setLastSavedNote('');
+
+    if (!Number.isFinite(lessonId)) return;
+
+    let cancelled = false;
+    fetch(`/uploader/api/lesson-notes?lessonId=${lessonId}`)
+      .then(async res => {
+        const data = await res.json();
+        if (res.status === 401) {
+          return { note: '' };
+        }
+        if (!res.ok) throw new Error(data?.error || 'Failed to load note');
+        return data;
+      })
+      .then(data => {
+        if (cancelled) return;
+        const serverNote = String(data?.note || '');
+        if (serverNote && serverNote !== saved) {
+          window.localStorage.setItem(key, serverNote);
+          setNote(serverNote);
+        }
+        if (serverNote) {
+          setLastSavedNote(serverNote);
+        }
+      })
+      .catch(err => {
+        console.error('Load note error:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lessonId, videoSrc]);
 
   useEffect(() => {
-    const existing = window.localStorage.getItem(VISITOR_ID_KEY);
-    if (existing) {
-      setVisitorId(existing);
-      return;
-    }
-    const generated = typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    window.localStorage.setItem(VISITOR_ID_KEY, generated);
-    setVisitorId(generated);
-  }, []);
-
-  useEffect(() => {
-    const key = `${NOTE_KEY_PREFIX}${videoSrc}`;
+    const key = Number.isFinite(lessonId)
+      ? `${NOTE_KEY_PREFIX}${lessonId}`
+      : `${NOTE_KEY_PREFIX}${videoSrc}`;
     if (note.trim()) {
       window.localStorage.setItem(key, note);
     } else {
       window.localStorage.removeItem(key);
     }
-  }, [note, videoSrc]);
+  }, [note, lessonId, videoSrc]);
 
   const sendNote = (noteToSave: string, force = false) => {
-    if (!noteToSave.trim() || !visitorId) return;
+    if (!Number.isFinite(lessonId)) return;
     if (!force && noteToSave === lastSavedNote) return;
+    if (!noteToSave.trim() && !lastSavedNote.trim() && !force) return;
 
-    fetch('api/lesson-notes', {
+    fetch('/uploader/api/lesson-notes', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,9 +96,7 @@ function LessonVideoContent() {
       keepalive: true,
       body: JSON.stringify({
         note: noteToSave,
-        videoSrc,
-        videoTitle: videoTitleParam || undefined,
-        visitorId,
+        lessonId,
       }),
     })
       .then(res => {
@@ -89,7 +111,8 @@ function LessonVideoContent() {
   };
 
   useEffect(() => {
-    if (!note.trim() || !visitorId) return;
+    if (!Number.isFinite(lessonId)) return;
+    if (!note.trim() && !lastSavedNote.trim()) return;
 
     if (saveTimer.current) {
       window.clearTimeout(saveTimer.current);
@@ -104,7 +127,7 @@ function LessonVideoContent() {
         window.clearTimeout(saveTimer.current);
       }
     };
-  }, [note, videoSrc, videoTitleParam, lastSavedNote, visitorId]);
+  }, [note, lessonId, lastSavedNote]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -123,7 +146,7 @@ function LessonVideoContent() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [note, visitorId, videoSrc, videoTitleParam, lastSavedNote]);
+  }, [note, lessonId, lastSavedNote]);
 
   const handleTogglePlay = () => {
     const el = videoRef.current;

@@ -11,7 +11,8 @@ export async function POST(req: NextRequest) {
     if (token) {
       const tokenHash = hashToken(token);
       const sql = `
-        DELETE FROM sessions
+        UPDATE sessions
+        SET expires_at = NOW() - INTERVAL '1 second'
         WHERE token_hash = '${sqlString(tokenHash)}'
       `;
       await runBooktolQuery(sql);

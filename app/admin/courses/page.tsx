@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import AdminShell from '../AdminShell';
 
 type Course = {
   id: number;
@@ -212,22 +213,20 @@ export default function CoursesAdminPage() {
   };
 
   return (
-    <main className="ui-shell ui-shell--light">
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-      <div className="ui-tag" style={{ marginBottom: 10 }}>Administración</div>
-      <h1 style={{ fontSize: 28, marginBottom: 8, color: '#192335' }}>Course Control</h1>
-      <p className="ui-muted" style={{ marginBottom: 16, maxWidth: 720 }}>
-        Create courses and add lessons.
-      </p>
-      <p className="ui-muted" style={{ marginBottom: 16 }}>
-        Manage enrollments in{' '}
-        <a href="/uploader/admin/enrollments">
-          the enrollments module
-        </a>
-        .
-      </p>
+    <AdminShell
+      title="Course Control"
+      description="Create courses, add lessons, and manage media assets."
+    >
+      <section className="admin-panel">
+        <p className="ui-muted" style={{ marginBottom: 16 }}>
+          Manage enrollments in{' '}
+          <a href="/admin/enrollments">
+            the enrollments module
+          </a>
+          .
+        </p>
 
-      <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 16 }}>
         <label>
           Admin password:{' '}
           <input
@@ -501,7 +500,7 @@ export default function CoursesAdminPage() {
           </div>
         </div>
       )}
-      </div>
-    </main>
+      </section>
+    </AdminShell>
   );
 }

@@ -147,203 +147,105 @@ export default function EmailsClient() {
   };
 
   return (
-    <div>
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ fontSize: 14, display: 'block', marginBottom: 6 }}>
+    <div className="emails-page">
+      <div className="emails-toolbar">
+        <label className="emails-label">
           Admin password:
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            className="ui-input emails-input"
+          />
         </label>
-        <input
-          type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          style={{
-            padding: 8,
-            minWidth: 240,
-            borderRadius: 6,
-            border: '1px solid #4b5563',
-            backgroundColor: '#020617',
-            color: '#e5e7eb',
-          }}
-        />
         <button
           onClick={fetchEmails}
           disabled={loading || !password}
-          style={{
-            marginLeft: 10,
-            padding: '8px 16px',
-            borderRadius: 9999,
-            border: 'none',
-            backgroundColor: '#2563eb',
-            color: 'white',
-            fontWeight: 600,
-            cursor: loading || !password ? 'not-allowed' : 'pointer',
-            opacity: loading || !password ? 0.6 : 1,
-          }}
+          className="ui-button ui-button-primary"
         >
           {loading ? 'Loading…' : 'Load emails'}
         </button>
       </div>
 
-      <div
-        style={{
-          marginBottom: 20,
-          padding: 14,
-          borderRadius: 10,
-          border: '1px solid #374151',
-          backgroundColor: '#0b1220',
-        }}
-      >
-        <div style={{ fontSize: 14, marginBottom: 8, fontWeight: 600 }}>
-          Email content
-        </div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <label style={{ fontSize: 13 }}>
+      <div className="emails-card ui-card">
+        <div className="emails-card__title">Email content</div>
+        <div className="emails-row">
+          <label className="emails-label">
             PDF filename (must end in .pdf):
-            <br />
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
+            <div className="emails-inline">
               <input
                 type="text"
                 value={lessonFile}
                 onChange={e => setLessonFile(e.target.value)}
                 placeholder="lesson_01.pdf"
-                style={{
-                  padding: 6,
-                  minWidth: 240,
-                  borderRadius: 6,
-                  border: '1px solid #4b5563',
-                  backgroundColor: '#020617',
-                  color: '#e5e7eb',
-                }}
+                className="ui-input"
               />
               <button
                 type="button"
                 onClick={openPdfModal}
                 disabled={!password}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: 9999,
-                  border: '1px solid #1d4ed8',
-                  backgroundColor: '#0b1220',
-                  color: '#93c5fd',
-                  fontWeight: 600,
-                  cursor: !password ? 'not-allowed' : 'pointer',
-                  opacity: !password ? 0.6 : 1,
-                }}
+                className="ui-button ui-button-outline"
               >
                 Browse PDFs
               </button>
             </div>
           </label>
-          <label style={{ fontSize: 13 }}>
+          <label className="emails-label">
             Lesson title:
-            <br />
             <input
               type="text"
               value={lessonTitle}
               onChange={e => setLessonTitle(e.target.value)}
               placeholder="Your English lesson"
-              style={{
-                padding: 6,
-                minWidth: 260,
-                marginTop: 4,
-                borderRadius: 6,
-                border: '1px solid #4b5563',
-                backgroundColor: '#020617',
-                color: '#e5e7eb',
-              }}
+              className="ui-input"
             />
           </label>
         </div>
-        <label style={{ fontSize: 13, display: 'block', marginTop: 10 }}>
+        <label className="emails-label emails-label--full">
           Subject:
-          <br />
           <input
             type="text"
             value={subject}
             onChange={e => setSubject(e.target.value)}
-            style={{
-              padding: 6,
-              width: '100%',
-              maxWidth: 520,
-              marginTop: 4,
-              borderRadius: 6,
-              border: '1px solid #4b5563',
-              backgroundColor: '#020617',
-              color: '#e5e7eb',
-            }}
+            className="ui-input"
           />
         </label>
-        <label style={{ fontSize: 13, display: 'block', marginTop: 10 }}>
+        <label className="emails-label emails-label--full">
           Extra message (optional):
-          <br />
           <textarea
             value={message}
             onChange={e => setMessage(e.target.value)}
             rows={5}
-            style={{
-              padding: 8,
-              width: '100%',
-              maxWidth: 720,
-              marginTop: 4,
-              borderRadius: 6,
-              border: '1px solid #4b5563',
-              backgroundColor: '#020617',
-              color: '#e5e7eb',
-              resize: 'vertical',
-            }}
+            className="ui-textarea emails-textarea"
           />
         </label>
       </div>
 
-      {error && (
-        <p style={{ color: '#f87171', marginTop: 8 }}>
-          Error: {error}
-        </p>
-      )}
-
-      {sendResult && (
-        <p style={{ color: '#34d399', marginTop: 8 }}>
-          {sendResult}
-        </p>
-      )}
+      {error && <p className="emails-error">Error: {error}</p>}
+      {sendResult && <p className="emails-success">{sendResult}</p>}
 
       {rows.length > 0 && (
-        <div style={{ overflowX: 'auto' }}>
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              border: '1px solid #374151',
-              backgroundColor: '#020617',
-            }}
-          >
+        <div className="emails-table">
+          <table className="emails-table__table">
             <thead>
               <tr>
-                <th style={{ textAlign: 'left', padding: 10, borderBottom: '1px solid #374151' }}>
+                <th>
                   <input
                     type="checkbox"
                     checked={selectedRecipients.length === rows.length && rows.length > 0}
                     onChange={e => toggleAll(e.target.checked)}
                   />
                 </th>
-                <th style={{ textAlign: 'left', padding: 10, borderBottom: '1px solid #374151' }}>
-                  Name
-                </th>
-                <th style={{ textAlign: 'left', padding: 10, borderBottom: '1px solid #374151' }}>
-                  Email
-                </th>
-                <th style={{ textAlign: 'left', padding: 10, borderBottom: '1px solid #374151' }}>
-                  Source
-                </th>
-                <th style={{ textAlign: 'left', padding: 10, borderBottom: '1px solid #374151' }}>
-                  Created
-                </th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Source</th>
+                <th>Created</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row, idx) => (
                 <tr key={row.id ?? `${row.email}-${idx}`}>
-                  <td style={{ padding: 10, borderBottom: '1px solid #1f2937' }}>
+                  <td>
                     {row.email && (
                       <input
                         type="checkbox"
@@ -352,18 +254,10 @@ export default function EmailsClient() {
                       />
                     )}
                   </td>
-                  <td style={{ padding: 10, borderBottom: '1px solid #1f2937' }}>
-                    {row.name || '—'}
-                  </td>
-                  <td style={{ padding: 10, borderBottom: '1px solid #1f2937' }}>
-                    {row.email || '—'}
-                  </td>
-                  <td style={{ padding: 10, borderBottom: '1px solid #1f2937' }}>
-                    {row.source || '—'}
-                  </td>
-                  <td style={{ padding: 10, borderBottom: '1px solid #1f2937' }}>
-                    {row.created_at ? new Date(row.created_at).toLocaleString() : '—'}
-                  </td>
+                  <td>{row.name || '—'}</td>
+                  <td>{row.email || '—'}</td>
+                  <td>{row.source || '—'}</td>
+                  <td>{row.created_at ? new Date(row.created_at).toLocaleString() : '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -372,7 +266,7 @@ export default function EmailsClient() {
       )}
 
       {rows.length > 0 && (
-        <div style={{ marginTop: 14 }}>
+        <div className="emails-actions">
           <button
             onClick={sendEmails}
             disabled={
@@ -381,135 +275,70 @@ export default function EmailsClient() {
               selectedRecipients.length === 0 ||
               !lessonFile.trim()
             }
-            style={{
-              padding: '10px 18px',
-              borderRadius: 9999,
-              border: 'none',
-              backgroundColor: '#f97316',
-              color: 'white',
-              fontWeight: 600,
-              cursor:
-                sending || !password || selectedRecipients.length === 0 || !lessonFile.trim()
-                  ? 'not-allowed'
-                  : 'pointer',
-              opacity:
-                sending || !password || selectedRecipients.length === 0 || !lessonFile.trim()
-                  ? 0.6
-                  : 1,
-            }}
+            className="ui-button ui-button-primary"
           >
-            {sending
-              ? 'Sending…'
-              : `Send to selected (${selectedRecipients.length})`}
+            {sending ? 'Sending…' : `Send to selected (${selectedRecipients.length})`}
           </button>
         </div>
       )}
 
       {rows.length === 0 && !loading && !error && (
-        <p style={{ color: '#9ca3af' }}>No emails loaded yet.</p>
+        <p className="emails-empty">No emails loaded yet.</p>
       )}
 
       {showPdfModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(2, 6, 23, 0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-            zIndex: 50,
-          }}
-        >
-          <div
-            style={{
-              width: '100%',
-              maxWidth: 720,
-              backgroundColor: '#0b1220',
-              borderRadius: 12,
-              border: '1px solid #1f2937',
-              padding: 16,
-              color: '#e5e7eb',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+        <div className="emails-modal">
+          <div className="emails-modal__content">
+            <div className="emails-modal__header">
               <div>
-                <div style={{ fontSize: 16, fontWeight: 700 }}>Select a PDF</div>
-                <div style={{ fontSize: 12, color: '#9ca3af' }}>
-                  Choose a file from the S3 bucket.
-                </div>
+                <div className="emails-modal__title">Select a PDF</div>
+                <div className="emails-modal__subtitle">Choose a file from the S3 bucket.</div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowPdfModal(false)}
-                style={{
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  color: '#9ca3af',
-                  fontSize: 18,
-                  cursor: 'pointer',
-                }}
+                className="emails-modal__close"
                 aria-label="Close"
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ marginTop: 12, marginBottom: 10 }}>
+            <div className="emails-modal__search">
               <input
                 type="text"
                 value={pdfSearch}
                 onChange={e => setPdfSearch(e.target.value)}
                 placeholder="Search PDFs..."
-                style={{
-                  padding: 8,
-                  width: '100%',
-                  borderRadius: 8,
-                  border: '1px solid #374151',
-                  backgroundColor: '#020617',
-                  color: '#e5e7eb',
-                }}
+                className="ui-input"
               />
             </div>
 
-            {pdfLoading && <div style={{ fontSize: 13 }}>Loading PDFs…</div>}
-            {pdfError && <div style={{ color: '#f87171', fontSize: 13 }}>Error: {pdfError}</div>}
+            {pdfLoading && <div className="emails-muted">Loading PDFs…</div>}
+            {pdfError && <div className="emails-error">Error: {pdfError}</div>}
 
             {!pdfLoading && !pdfError && (
-              <div style={{ maxHeight: 360, overflowY: 'auto', marginTop: 6 }}>
+              <div className="emails-modal__list">
                 {filteredPdfs.map(item => (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => selectPdf(item.key)}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '10px 12px',
-                        borderRadius: 8,
-                        border: '1px solid #1f2937',
-                        backgroundColor: '#0f172a',
-                        color: '#e5e7eb',
-                        marginBottom: 8,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>{item.key}</div>
-                      {item.lastModified && (
-                        <div style={{ fontSize: 12, color: '#94a3b8' }}>
-                          Updated {new Date(item.lastModified).toLocaleString()}
-                          {typeof item.size === 'number'
-                            ? ` • ${(item.size / 1024).toFixed(1)} KB`
-                            : ''}
-                        </div>
-                      )}
-                    </button>
-                  ))}
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => selectPdf(item.key)}
+                    className="emails-modal__item"
+                  >
+                    <div className="emails-modal__item-title">{item.key}</div>
+                    {item.lastModified && (
+                      <div className="emails-modal__item-meta">
+                        Updated {new Date(item.lastModified).toLocaleString()}
+                        {typeof item.size === 'number'
+                          ? ` • ${(item.size / 1024).toFixed(1)} KB`
+                          : ''}
+                      </div>
+                    )}
+                  </button>
+                ))}
                 {filteredPdfs.length === 0 && (
-                  <div style={{ fontSize: 13, color: '#9ca3af' }}>
-                    No PDFs found.
-                  </div>
+                  <div className="emails-muted">No PDFs found.</div>
                 )}
               </div>
             )}
