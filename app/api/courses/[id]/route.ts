@@ -44,7 +44,7 @@ export async function GET(req: NextRequest, ctx: any) {
 
     const lessonIds = lessonRows
       .map((row: any) => Number(row.id))
-      .filter(id => Number.isFinite(id));
+      .filter((id: number) => Number.isFinite(id));
 
     let progressRows: any[] = [];
     if (lessonIds.length > 0) {

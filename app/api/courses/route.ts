@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     const courseIds = courseRows
       .map((row: any) => Number(row.id))
-      .filter(id => Number.isFinite(id));
+      .filter((id: number) => Number.isFinite(id));
     const courseIdList = courseIds.join(', ');
 
     const lessonSql = `
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     const lessonRows = coerceRows(await runBooktolQuery(lessonSql));
     const lessonIds = lessonRows
       .map((row: any) => Number(row.id))
-      .filter(id => Number.isFinite(id));
+      .filter((id: number) => Number.isFinite(id));
     const lessonIdList = lessonIds.join(', ');
 
     const progressMap = new Map<number, number>();
