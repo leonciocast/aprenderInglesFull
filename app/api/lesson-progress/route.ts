@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { coerceRows, runBooktolQuery, sqlString } from '@/app/lib/booktol';
+import { coerceRows, runBooktolQuery } from '@/app/lib/booktol';
 import { getUserFromRequest } from '@/app/lib/session';
 
 export const runtime = 'nodejs';
@@ -39,15 +39,22 @@ export async function GET(req: NextRequest) {
     }
 
     const sql = `
-      SELECT note
-      FROM student_lesson_note
+      SELECT progress_percent, position_seconds, duration_seconds, completed_at
+      FROM student_lesson_progress
       WHERE user_id = ${Number(user.id)} AND lesson_id = ${lessonId}
       LIMIT 1
     `;
     const rows = coerceRows(await runBooktolQuery(sql));
-    return NextResponse.json({ note: rows[0]?.note || '' });
+    const row = rows[0];
+
+    return NextResponse.json({
+      progressPercent: Number(row?.progress_percent || 0),
+      positionSeconds: Number(row?.position_seconds || 0),
+      durationSeconds: Number(row?.duration_seconds || 0),
+      completedAt: row?.completed_at || null,
+    });
   } catch (err: any) {
-    console.error('Lesson notes GET error:', err);
+    console.error('Lesson progress GET error:', err);
     return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
   }
 }
@@ -60,15 +67,17 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const note = String(body?.note || '');
     const lessonId = Number(body?.lessonId);
+    const progressPercent = Number(body?.progressPercent);
+    const positionSeconds = Number(body?.positionSeconds);
+    const durationSeconds = Number(body?.durationSeconds);
 
     if (!Number.isFinite(lessonId)) {
       return NextResponse.json({ error: 'Invalid lesson id' }, { status: 400 });
     }
 
-    if (note.length > 20000) {
-      return NextResponse.json({ error: 'Note too long' }, { status: 400 });
+    if (!Number.isFinite(progressPercent) || !Number.isFinite(durationSeconds)) {
+      return NextResponse.json({ error: 'Invalid progress payload' }, { status: 400 });
     }
 
     const enrolled = await assertEnrollment(Number(user.id), lessonId);
@@ -76,41 +85,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Not enrolled' }, { status: 403 });
     }
 
-    if (!note.trim()) {
-      const clearSql = `
-        INSERT INTO student_lesson_note
-          (user_id, lesson_id, note, created_at, updated_at)
-        VALUES
-          (
-            ${Number(user.id)},
-            ${lessonId},
-            '',
-            NOW(),
-            NOW()
-          )
-        ON CONFLICT (user_id, lesson_id)
-        DO UPDATE SET
-          note = '',
-          updated_at = NOW()
-      `;
-      await runBooktolQuery(clearSql);
-      return NextResponse.json({ ok: true });
-    }
+    const clampedPercent = Math.max(0, Math.min(100, progressPercent));
+    const clampedPosition = Math.max(0, Math.floor(positionSeconds || 0));
+    const clampedDuration = Math.max(0, Math.floor(durationSeconds || 0));
 
+    const completedClause =
+      clampedPercent >= 90 ? 'NOW()' : 'NULL';
     const sql = `
-      INSERT INTO student_lesson_note
-        (user_id, lesson_id, note, created_at, updated_at)
+      INSERT INTO student_lesson_progress
+        (user_id, lesson_id, progress_percent, position_seconds, duration_seconds, completed_at, updated_at)
       VALUES
         (
           ${Number(user.id)},
           ${lessonId},
-          '${sqlString(note)}',
-          NOW(),
+          ${clampedPercent},
+          ${clampedPosition},
+          ${clampedDuration},
+          ${completedClause},
           NOW()
         )
       ON CONFLICT (user_id, lesson_id)
       DO UPDATE SET
-        note = EXCLUDED.note,
+        progress_percent = EXCLUDED.progress_percent,
+        position_seconds = EXCLUDED.position_seconds,
+        duration_seconds = EXCLUDED.duration_seconds,
+        completed_at = CASE
+          WHEN EXCLUDED.progress_percent >= 90 THEN COALESCE(student_lesson_progress.completed_at, NOW())
+          ELSE student_lesson_progress.completed_at
+        END,
         updated_at = NOW()
     `;
 
@@ -118,7 +120,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
-    console.error('Lesson notes POST error:', err);
+    console.error('Lesson progress POST error:', err);
     return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
   }
 }

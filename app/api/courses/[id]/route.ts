@@ -40,7 +40,42 @@ export async function GET(req: NextRequest, ctx: any) {
       WHERE course_id = ${courseId}
       ORDER BY lesson_order ASC, id ASC
     `;
-    const lessons = coerceRows(await runBooktolQuery(lessonsSql));
+    const lessonRows = coerceRows(await runBooktolQuery(lessonsSql));
+
+    const lessonIds = lessonRows
+      .map((row: any) => Number(row.id))
+      .filter(id => Number.isFinite(id));
+
+    let progressRows: any[] = [];
+    if (lessonIds.length > 0) {
+      const progressSql = `
+        SELECT lesson_id, progress_percent, completed_at
+        FROM student_lesson_progress
+        WHERE user_id = ${Number(user.id)}
+          AND lesson_id IN (${lessonIds.join(', ')})
+      `;
+      progressRows = coerceRows(await runBooktolQuery(progressSql));
+    }
+
+    const progressMap = new Map<number, { percent: number; completedAt: string | null }>();
+    progressRows.forEach((row: any) => {
+      const lessonId = Number(row.lesson_id);
+      if (!Number.isFinite(lessonId)) return;
+      progressMap.set(lessonId, {
+        percent: Number(row.progress_percent || 0),
+        completedAt: row.completed_at || null,
+      });
+    });
+
+    const lessons = lessonRows.map((row: any) => {
+      const lessonId = Number(row.id);
+      const progress = progressMap.get(lessonId);
+      return {
+        ...row,
+        progress_percent: progress?.percent ?? 0,
+        completed_at: progress?.completedAt ?? null,
+      };
+    });
 
     return NextResponse.json({ course, lessons });
   } catch (err: any) {

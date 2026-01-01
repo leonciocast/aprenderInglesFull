@@ -8,6 +8,8 @@ type Course = {
   title: string;
   description?: string;
   cover_image_url?: string;
+  lesson_count?: number;
+  progress_percent?: number | string;
 };
 
 export default function CoursesPage() {
@@ -321,13 +323,21 @@ export default function CoursesPage() {
                   }}
                   className="course-card"
                 >
-                  <div className="course-thumb">
-                    {course.cover_image_url ? (
-                      <img src={course.cover_image_url} alt={course.title} />
-                    ) : (
-                      <span>Curso</span>
-                    )}
-                  </div>
+            <div className="course-thumb">
+              {course.cover_image_url ? (
+                <img src={course.cover_image_url} alt={course.title} />
+              ) : (
+                <span>Curso</span>
+              )}
+              <div
+                className="course-progress"
+                style={{
+                  ['--progress' as any]: `${Math.round(Number(course.progress_percent || 0))}%`,
+                }}
+              >
+                <span>{Math.round(Number(course.progress_percent || 0))}%</span>
+              </div>
+            </div>
                   <div className="course-meta">Curso</div>
                   <div className="course-title">{course.title}</div>
                   {course.description && (
