@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import FloatingAssistant from '@/app/components/FloatingAssistant';
 
 const SEEK_SECONDS = 10;
 const COUNTDOWN_START = 5;
@@ -708,8 +709,14 @@ export default function CourseLessonPage() {
               style={{ fontSize: 14, resize: 'vertical' }}
             />
           </section>
+
         </div>
       </div>
+      <FloatingAssistant
+        lessonId={lessonId}
+        lessonTitle={lesson?.title || ''}
+        courseTitle={courseTitle}
+      />
     </main>
   );
 }
