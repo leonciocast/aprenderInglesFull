@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextParam = useMemo(() => searchParams.get('next') || '', [searchParams]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -97,12 +99,24 @@ export default function RegisterPage() {
 
         <button
           type="button"
-          onClick={() => router.push('/auth/login')}
+          onClick={() =>
+            router.push(
+              `/auth/login${nextParam ? `?next=${encodeURIComponent(nextParam)}` : ''}`,
+            )
+          }
           className="auth-secondary auth-secondary--full"
         >
           Ya tengo cuenta
         </button>
       </form>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }

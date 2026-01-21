@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextParam = useMemo(() => searchParams.get('next') || '', [searchParams]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,7 +44,9 @@ export default function LoginPage() {
         setHint(data?.hint || '');
         throw new Error(data.error || 'Login failed');
       }
-      router.push('/courses');
+      const safeNext =
+        nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '';
+      router.push(safeNext || '/courses');
     } catch (err: any) {
       setError(toFriendlyError(err.message || String(err)));
     } finally {
@@ -89,7 +93,11 @@ export default function LoginPage() {
         <div className="auth-actions">
           <button
             type="button"
-            onClick={() => router.push('/auth/register')}
+            onClick={() =>
+              router.push(
+                `/auth/register${nextParam ? `?next=${encodeURIComponent(nextParam)}` : ''}`,
+              )
+            }
             className="auth-secondary"
           >
             Crear cuenta
@@ -104,5 +112,13 @@ export default function LoginPage() {
         </div>
       </form>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

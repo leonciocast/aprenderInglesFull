@@ -34,7 +34,13 @@ function signUnsubscribe(email: string, secret?: string) {
 }
 
 function normalizeLessonFile(raw: string) {
-  const cleaned = raw.replace(/[^A-Za-z0-9_.-]/g, '');
+  let decoded = raw.trim();
+  try {
+    decoded = decodeURIComponent(decoded);
+  } catch {
+    // Keep original if it's not valid URI encoding.
+  }
+  const cleaned = decoded.replace(/[^\p{L}\p{M}\p{N} ._-]/gu, '');
   if (!cleaned || !cleaned.toLowerCase().endsWith('.pdf')) {
     throw new Error('Invalid lesson file. It must be a .pdf filename.');
   }
