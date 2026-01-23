@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Question = {
@@ -11,24 +11,52 @@ type Question = {
 };
 
 const NUMBER_FILES = [
-  'eight-fifty-forty.png',
-  'eleven-fifty-forty.png',
-  'fifteen-fifty-forty.png',
-  'four-fifty-forty.png',
-  'fourteen-fifty-forty.png',
-  'nine-fifty-forty.png',
-  'seven-fifty-forty.png',
-  'seventy--fifty-forty.png',
-  'six-fifty-forty.png',
-  'sixteen-fifty-forty.png',
-  'ten-fifty-forty.png',
-  'three-fifty-forty.png',
-  'twelve-fifty-forty.png',
-  'zero-fifty-forty.png',
+  'Eight.png',
+  'Eighteen.png',
+  'Eighty.png',
+  'Eleven.png',
+  'Fifteen.png',
+  'Fifty.png',
+  'Five.png',
+  'Forty.png',
+  'Four.png',
+  'Fourteen.png',
+  'Nine.png',
+  'Nineteen.png',
+  'Ninety.png',
+  'One hundred.png',
+  'One thousand.png',
+  'One.png',
+  'Seven.png',
+  'Seventeen.png',
+  'Seventy.png',
+  'Six.png',
+  'Sixteen.png',
+  'Sixty.png',
+  'Thirteen.png',
+  'Thirty.png',
+  'Three.png',
+  'Twelve.png',
+  'Twenty.png',
+  'Two.png',
+  'Zero.png',
+  'ten.png',
 ];
 
-const NUMBER_STOPWORDS = ['fifty', 'forty'];
+const NUMBER_STOPWORDS: string[] = [];
 const IMAGE_BASE = '/uploader/image/Numbers';
+const AUDIO_BASE = '/uploader/Audio/Numbers';
+
+const toAudioName = (value: string) => {
+  if (!value) return '';
+  const normalized = value.replace(/_/g, ' ');
+  const label = normalized
+    .split(' ')
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+  return `Numbers_${label}`;
+};
 
 function hashString(value: string) {
   let hash = 2166136261;
@@ -60,22 +88,13 @@ function shuffleWithSeed<T>(items: T[], seed: number) {
 
 function parseOptions(file: string) {
   const base = file.replace(/\.[^.]+$/, '');
-  const parts = base
-    .split('-')
-    .filter(Boolean)
-    .filter(part => !NUMBER_STOPWORDS.includes(part.toLowerCase()));
-  const [correct, alt1, alt2] = parts;
-  return { base, correct, options: [correct, alt1, alt2].filter(Boolean) };
+  return { base, correct: base, options: [] };
 }
 
 function buildQuestions(): Question[] {
   const correctList = NUMBER_FILES.map(file => {
     const base = file.replace(/\.[^.]+$/, '');
-    const parts = base
-      .split('-')
-      .filter(Boolean)
-      .filter(part => !NUMBER_STOPWORDS.includes(part.toLowerCase()));
-    return parts[0];
+    return base;
   }).filter(Boolean);
 
   return NUMBER_FILES.map(file => {
@@ -83,12 +102,22 @@ function buildQuestions(): Question[] {
     const fallbackPool = correctList.filter(item => item && item !== correct);
     const fallbackSeed = hashString(`${file}-fallback`);
     const fallbackShuffled = shuffleWithSeed(fallbackPool, fallbackSeed);
-    const merged = options
+    const merged = [correct]
+      .concat(options)
       .concat(fallbackShuffled)
       .filter((value, index, arr) => arr.indexOf(value) === index)
       .slice(0, 3);
+    const filled = [...merged];
+    if (filled.length < 3) {
+      for (const item of fallbackShuffled) {
+        if (filled.length >= 3) break;
+        if (!filled.includes(item)) {
+          filled.push(item);
+        }
+      }
+    }
     const seed = hashString(file);
-    const shuffled = shuffleWithSeed(merged, seed);
+    const shuffled = shuffleWithSeed(filled, seed);
     return {
       id: base,
       image: `${IMAGE_BASE}/${file}`,
@@ -107,6 +136,7 @@ export default function NumerosPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const [finished, setFinished] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -139,12 +169,24 @@ export default function NumerosPage() {
   const current = questions[index];
   const progressPercent = Math.round(((index + (finished ? 1 : 0)) / total) * 100);
 
+  const playAudio = (value: string) => {
+    if (!value) return;
+    const audioName = toAudioName(value);
+    if (!audioName) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.src = `${AUDIO_BASE}/${audioName}.wav`;
+    audio.currentTime = 0;
+    void audio.play();
+  };
+
   const handleSelect = (value: string) => {
     if (selected) return;
     setSelected(value);
     if (value === current.correct) {
       setCorrectCount(prev => prev + 1);
     }
+    playAudio(current.correct);
   };
 
   const handleNext = () => {
@@ -165,6 +207,7 @@ export default function NumerosPage() {
 
   return (
     <main className="student-dashboard">
+      <audio ref={audioRef} preload="auto" />
       <div className="student-layout">
         <aside className="student-sidebar">
           <div className="student-sidebar__section">
@@ -334,8 +377,89 @@ export default function NumerosPage() {
                   display: 'grid',
                   placeItems: 'center',
                   boxShadow: '0 18px 40px rgba(15, 23, 42, 0.08)',
+                  position: 'relative',
                 }}
               >
+                {selected && (
+                  <button
+                    type="button"
+                    aria-label="Reproducir audio"
+                    onClick={() => playAudio(current.correct)}
+                    style={{
+                      position: 'absolute',
+                      top: 12,
+                      right: 12,
+                      width: 46,
+                      height: 46,
+                      borderRadius: 14,
+                      border: '1px solid #e2e8f0',
+                      background: '#fff',
+                      display: 'grid',
+                      placeItems: 'center',
+                      boxShadow: '0 10px 24px rgba(15, 23, 42, 0.12)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="28"
+                      height="28"
+                      viewBox="0 0 256 256"
+                      role="img"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M72 98 L168 64 L168 192 L72 158 Z"
+                        fill="#ffffff"
+                        stroke="#111"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <rect
+                        x="34"
+                        y="106"
+                        width="46"
+                        height="44"
+                        rx="12"
+                        fill="#ffffff"
+                        stroke="#111"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M86 148 L168 178 L168 192 L72 158 Z"
+                        fill="#d9d9d9"
+                        opacity="0.6"
+                      />
+                      <path
+                        d="M192 104 Q212 128 192 152"
+                        fill="none"
+                        stroke="#111"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M210 88 Q236 128 210 168"
+                        fill="none"
+                        stroke="#111"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M228 72 Q260 128 228 184"
+                        fill="none"
+                        stroke="#111"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                )}
                 <img
                   src={current.image}
                   alt={`Número ${current.correct}`}

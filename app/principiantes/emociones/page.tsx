@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Question = {
@@ -23,6 +23,12 @@ const EMOTION_FILES = [
 ];
 
 const IMAGE_BASE = '/uploader/image/Emotions';
+const AUDIO_BASE = '/uploader/Audio/Emotions';
+
+const toAudioName = (value: string) => {
+  if (!value) return '';
+  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+};
 
 function hashString(value: string) {
   let hash = 2166136261;
@@ -89,6 +95,7 @@ export default function EmocionesPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const [finished, setFinished] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -121,12 +128,24 @@ export default function EmocionesPage() {
   const current = questions[index];
   const progressPercent = Math.round(((index + (finished ? 1 : 0)) / total) * 100);
 
+  const playAudio = (emotion: string) => {
+    if (!emotion) return;
+    const audioName = toAudioName(emotion);
+    if (!audioName) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.src = `${AUDIO_BASE}/${audioName}.wav`;
+    audio.currentTime = 0;
+    void audio.play();
+  };
+
   const handleSelect = (value: string) => {
     if (selected) return;
     setSelected(value);
     if (value === current.correct) {
       setCorrectCount(prev => prev + 1);
     }
+    playAudio(current.correct);
   };
 
   const handleNext = () => {
@@ -147,6 +166,7 @@ export default function EmocionesPage() {
 
   return (
     <main className="student-dashboard">
+      <audio ref={audioRef} preload="auto" />
       <div className="student-layout">
         <aside className="student-sidebar">
           <div className="student-sidebar__section">
@@ -312,8 +332,89 @@ export default function EmocionesPage() {
                   display: 'grid',
                   placeItems: 'center',
                   boxShadow: '0 18px 40px rgba(15, 23, 42, 0.08)',
+                  position: 'relative',
                 }}
               >
+                {selected && (
+                  <button
+                    type="button"
+                    aria-label="Reproducir audio"
+                    onClick={() => playAudio(current.correct)}
+                    style={{
+                      position: 'absolute',
+                      top: 12,
+                      right: 12,
+                      width: 46,
+                      height: 46,
+                      borderRadius: 14,
+                      border: '1px solid #e2e8f0',
+                      background: '#fff',
+                      display: 'grid',
+                      placeItems: 'center',
+                      boxShadow: '0 10px 24px rgba(15, 23, 42, 0.12)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="28"
+                      height="28"
+                      viewBox="0 0 256 256"
+                      role="img"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M72 98 L168 64 L168 192 L72 158 Z"
+                        fill="#ffffff"
+                        stroke="#111"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <rect
+                        x="34"
+                        y="106"
+                        width="46"
+                        height="44"
+                        rx="12"
+                        fill="#ffffff"
+                        stroke="#111"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M86 148 L168 178 L168 192 L72 158 Z"
+                        fill="#d9d9d9"
+                        opacity="0.6"
+                      />
+                      <path
+                        d="M192 104 Q212 128 192 152"
+                        fill="none"
+                        stroke="#111"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M210 88 Q236 128 210 168"
+                        fill="none"
+                        stroke="#111"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M228 72 Q260 128 228 184"
+                        fill="none"
+                        stroke="#111"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                )}
                 <img
                   src={current.image}
                   alt={`Emoción ${current.correct}`}

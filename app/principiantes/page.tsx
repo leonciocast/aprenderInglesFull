@@ -305,7 +305,7 @@ export default function PrincipiantesPage() {
                   <h3>Números</h3>
                 </div>
                 <div className="quiz-card__row">
-                  <strong>14 tarjetas</strong>
+                  <strong>30 tarjetas</strong>
                 </div>
                 <div className="quiz-card__row">
                   <strong>Elige el número correcto</strong>
