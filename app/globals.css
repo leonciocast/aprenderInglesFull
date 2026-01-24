@@ -1964,6 +1964,10 @@ button {
   }
   .student-sidebar {
     position: static;
+    order: 2;
+  }
+  .student-content {
+    order: 1;
   }
   .student-hero__card {
     flex-direction: column;
