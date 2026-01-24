@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 function LoginForm() {
@@ -12,6 +12,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [hint, setHint] = useState('');
+  const [checkingRefresh, setCheckingRefresh] = useState(true);
 
   const toFriendlyError = (value: string) => {
     const text = value.toLowerCase();
@@ -45,6 +46,9 @@ function LoginForm() {
         setHint(data?.hint || '');
         throw new Error(data.error || 'Login failed');
       }
+      if (data?.refreshToken) {
+        localStorage.setItem('aif_refresh', String(data.refreshToken));
+      }
       const safeNext =
         nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '';
       router.push(safeNext || '/courses');
@@ -54,6 +58,32 @@ function LoginForm() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let active = true;
+    const tryRefresh = async () => {
+      try {
+        const token = localStorage.getItem('aif_refresh');
+        if (!token) return;
+        const res = await fetch('/uploader/api/auth/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ token }),
+        });
+        if (!res.ok) return;
+        const safeNext =
+          nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '';
+        router.replace(safeNext || '/courses');
+      } finally {
+        if (active) setCheckingRefresh(false);
+      }
+    };
+    tryRefresh();
+    return () => {
+      active = false;
+    };
+  }, [nextParam, router]);
 
   return (
     <main className="auth-page ui-shell ui-shell--light">
@@ -85,10 +115,10 @@ function LoginForm() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || checkingRefresh}
           className="auth-submit"
         >
-          {loading ? 'Entrando…' : 'Entrar'}
+          {loading || checkingRefresh ? 'Entrando…' : 'Entrar'}
         </button>
 
         <div className="auth-actions">

@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
     `;
     await runBooktolQuery(insertSessionSql);
 
-    const res = NextResponse.json({ ok: true });
+    const res = NextResponse.json({ ok: true, refreshToken: sessionToken });
     res.headers.append('Set-Cookie', buildSessionCookie(sessionToken));
     res.headers.append('Set-Cookie', clearSessionCookieForPath('/uploader'));
     return res;

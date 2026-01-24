@@ -40,6 +40,9 @@ function VerifyContent() {
         if (!res.ok) throw new Error(data.error || 'Verification failed');
         setStatus('ok');
         setMessage('Cuenta verificada. Entrando…');
+        if (data?.refreshToken) {
+          localStorage.setItem('aif_refresh', String(data.refreshToken));
+        }
         router.replace(nextParam);
       })
       .catch(err => {
