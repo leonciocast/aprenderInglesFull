@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateToken, hashToken, verifyPassword } from '@/app/lib/auth';
 import { coerceRows, runBooktolQuery, sqlString } from '@/app/lib/booktol';
-import { buildSessionCookie } from '@/app/lib/session';
+import { buildSessionCookie, clearSessionCookieForPath } from '@/app/lib/session';
 
 export const runtime = 'nodejs';
 
@@ -59,7 +59,8 @@ export async function POST(req: NextRequest) {
     await runBooktolQuery(insertSql);
 
     const res = NextResponse.json({ ok: true });
-    res.headers.set('Set-Cookie', buildSessionCookie(sessionToken));
+    res.headers.append('Set-Cookie', buildSessionCookie(sessionToken));
+    res.headers.append('Set-Cookie', clearSessionCookieForPath('/uploader'));
     return res;
   } catch (err: any) {
     console.error('Login error:', err);

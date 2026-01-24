@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hashToken } from '@/app/lib/auth';
 import { runBooktolQuery, sqlString } from '@/app/lib/booktol';
-import { clearSessionCookie, SESSION_COOKIE_NAME } from '@/app/lib/session';
+import {
+  clearSessionCookie,
+  clearSessionCookieForPath,
+  SESSION_COOKIE_NAME,
+} from '@/app/lib/session';
 
 export const runtime = 'nodejs';
 
@@ -19,7 +23,8 @@ export async function POST(req: NextRequest) {
     }
 
     const res = NextResponse.json({ ok: true });
-    res.headers.set('Set-Cookie', clearSessionCookie());
+    res.headers.append('Set-Cookie', clearSessionCookie());
+    res.headers.append('Set-Cookie', clearSessionCookieForPath('/uploader'));
     return res;
   } catch (err: any) {
     console.error('Logout error:', err);

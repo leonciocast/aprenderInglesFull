@@ -5,14 +5,33 @@ import { coerceRows, runBooktolQuery, sqlString } from './booktol';
 export const SESSION_COOKIE_NAME = 'aif_session';
 const SESSION_TTL_DAYS = 36500;
 
-export function buildSessionCookie(token: string) {
+export function buildSessionCookieForPath(token: string, path = '/') {
   const maxAge = SESSION_TTL_DAYS * 24 * 60 * 60;
   const secure = process.env.NODE_ENV === 'production';
   const domain = process.env.AUTH_COOKIE_DOMAIN;
   const parts = [
     `${SESSION_COOKIE_NAME}=${token}`,
     `Max-Age=${maxAge}`,
-    'Path=/',
+    `Path=${path}`,
+    'HttpOnly',
+    'SameSite=Lax',
+  ];
+  if (domain) parts.push(`Domain=${domain}`);
+  if (secure) parts.push('Secure');
+  return parts.join('; ');
+}
+
+export function buildSessionCookie(token: string) {
+  return buildSessionCookieForPath(token, '/');
+}
+
+export function clearSessionCookieForPath(path = '/') {
+  const secure = process.env.NODE_ENV === 'production';
+  const domain = process.env.AUTH_COOKIE_DOMAIN;
+  const parts = [
+    `${SESSION_COOKIE_NAME}=`,
+    'Max-Age=0',
+    `Path=${path}`,
     'HttpOnly',
     'SameSite=Lax',
   ];
@@ -22,18 +41,7 @@ export function buildSessionCookie(token: string) {
 }
 
 export function clearSessionCookie() {
-  const secure = process.env.NODE_ENV === 'production';
-  const domain = process.env.AUTH_COOKIE_DOMAIN;
-  const parts = [
-    `${SESSION_COOKIE_NAME}=`,
-    'Max-Age=0',
-    'Path=/',
-    'HttpOnly',
-    'SameSite=Lax',
-  ];
-  if (domain) parts.push(`Domain=${domain}`);
-  if (secure) parts.push('Secure');
-  return parts.join('; ');
+  return clearSessionCookieForPath('/');
 }
 
 export async function getUserFromRequest(req: NextRequest) {
