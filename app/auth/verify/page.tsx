@@ -33,6 +33,7 @@ function VerifyContent() {
       `/uploader/api/auth/verify?token=${encodeURIComponent(token)}${
         nextParam ? `&next=${encodeURIComponent(nextParam)}` : ''
       }`,
+      { credentials: 'include' },
     )
       .then(async res => {
         const data = await res.json();

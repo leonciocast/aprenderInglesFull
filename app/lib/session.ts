@@ -9,9 +9,11 @@ export function buildSessionCookieForPath(token: string, path = '/') {
   const maxAge = SESSION_TTL_DAYS * 24 * 60 * 60;
   const secure = process.env.NODE_ENV === 'production';
   const domain = process.env.AUTH_COOKIE_DOMAIN;
+  const expires = new Date(Date.now() + maxAge * 1000).toUTCString();
   const parts = [
     `${SESSION_COOKIE_NAME}=${token}`,
     `Max-Age=${maxAge}`,
+    `Expires=${expires}`,
     `Path=${path}`,
     'HttpOnly',
     'SameSite=Lax',
