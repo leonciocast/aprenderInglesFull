@@ -36,6 +36,14 @@ const toAudioName = (value: string) => {
   return `Bathroom_${label}`;
 };
 
+const buildAudioCandidates = (value: string) => {
+  const base = toAudioName(value);
+  if (!base) return [];
+  const underscored = base.replace(/ /g, '_');
+  const compact = base.replace(/ /g, '');
+  return [base, underscored, compact].filter((item, index, arr) => arr.indexOf(item) === index);
+};
+
 function hashString(value: string) {
   let hash = 2166136261;
   for (let i = 0; i < value.length; i += 1) {
@@ -151,13 +159,28 @@ export default function BathroomPage() {
 
   const playAudio = (item: string) => {
     if (!item) return;
-    const audioName = toAudioName(item);
-    if (!audioName) return;
     const audio = audioRef.current;
     if (!audio) return;
-    audio.src = `${AUDIO_BASE}/${audioName}.wav`;
-    audio.currentTime = 0;
-    void audio.play();
+    const candidates = buildAudioCandidates(item);
+    if (!candidates.length) return;
+    let index = 0;
+
+    const tryPlay = () => {
+      const candidate = candidates[index];
+      if (!candidate) return;
+      audio.src = encodeURI(`${AUDIO_BASE}/${candidate}.wav`);
+      audio.currentTime = 0;
+      void audio.play();
+    };
+
+    audio.onerror = () => {
+      index += 1;
+      if (index < candidates.length) {
+        tryPlay();
+      }
+    };
+
+    tryPlay();
   };
 
   const handleSelect = (value: string) => {
