@@ -28,7 +28,9 @@ const AUDIO_BASE = '/uploader/Audio/Bathroom';
 const toAudioName = (value: string) => {
   if (!value) return '';
   const normalized = value.replace(/_/g, ' ');
+  const normalizedFixed = normalized.replace(/\btoilet paper\b/gi, 'Toiletpaper');
   const label = normalized
+    .replace(/\btoilet paper\b/gi, 'Toiletpaper')
     .split(' ')
     .filter(Boolean)
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
