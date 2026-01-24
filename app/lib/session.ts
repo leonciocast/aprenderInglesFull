@@ -38,6 +38,7 @@ export function buildRefreshCookie(token: string, path = '/') {
     `Max-Age=${maxAge}`,
     `Expires=${expires}`,
     `Path=${path}`,
+    'HttpOnly',
     'SameSite=Lax',
   ];
   if (domain) parts.push(`Domain=${domain}`);
