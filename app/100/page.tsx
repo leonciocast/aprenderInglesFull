@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchMeWithRefresh } from '@/app/lib/auth-client';
 
 const PDF_FILENAME = 'Las 100 frases más comunes en inglés.pdf';
 
@@ -18,7 +19,7 @@ export default function HundredPhrasesPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const meRes = await fetch('/uploader/api/auth/me');
+        const meRes = await fetchMeWithRefresh();
         if (!meRes.ok) {
           router.replace(`/auth/login?next=${encodeURIComponent('/100')}`);
           return;

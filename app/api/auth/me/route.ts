@@ -14,7 +14,11 @@ export async function GET(req: NextRequest) {
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
-      const refreshToken = req.cookies.get(REFRESH_COOKIE_NAME)?.value || '';
+      const authHeader = req.headers.get('authorization') || '';
+      const bearerToken = authHeader.startsWith('Bearer ')
+        ? authHeader.slice('Bearer '.length).trim()
+        : '';
+      const refreshToken = req.cookies.get(REFRESH_COOKIE_NAME)?.value || bearerToken;
       if (!refreshToken) {
         return NextResponse.json({ user: null }, { status: 401 });
       }

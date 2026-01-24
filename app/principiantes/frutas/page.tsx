@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchMeWithRefresh } from '@/app/lib/auth-client';
 
 type Question = {
   id: string;
@@ -120,7 +121,7 @@ export default function FrutasPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const meRes = await fetch('/uploader/api/auth/me');
+        const meRes = await fetchMeWithRefresh();
         if (!meRes.ok) {
           router.replace(`/auth/login?next=${encodeURIComponent('/principiantes/frutas')}`);
           return;

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { fetchMeWithRefresh } from '@/app/lib/auth-client';
 
 type Quiz = {
   id: number;
@@ -58,7 +59,7 @@ export default function QuizPage() {
     const init = async () => {
       try {
         setLoading(true);
-        const meRes = await fetch('/uploader/api/auth/me');
+        const meRes = await fetchMeWithRefresh();
         const meData = await meRes.json();
         if (meRes.ok) {
           setMeLabel(meData?.user?.name || meData?.user?.email || '');

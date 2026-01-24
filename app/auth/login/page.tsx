@@ -63,11 +63,12 @@ function LoginForm() {
     let active = true;
     const tryRefresh = async () => {
       try {
+        const storedRefresh = localStorage.getItem('aif_refresh') || '';
         const res = await fetch('/uploader/api/auth/refresh', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({}),
+          body: JSON.stringify(storedRefresh ? { token: storedRefresh } : {}),
         });
         if (!res.ok) return;
         const safeNext =
