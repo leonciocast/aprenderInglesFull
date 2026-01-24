@@ -63,7 +63,13 @@ function LoginForm() {
     let active = true;
     const tryRefresh = async () => {
       try {
-        const token = localStorage.getItem('aif_refresh');
+        const token =
+          localStorage.getItem('aif_refresh') ||
+          document.cookie
+            .split('; ')
+            .find(row => row.startsWith('aif_refresh='))
+            ?.split('=')[1] ||
+          '';
         if (!token) return;
         const res = await fetch('/uploader/api/auth/refresh', {
           method: 'POST',

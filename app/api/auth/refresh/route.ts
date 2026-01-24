@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hashToken } from '@/app/lib/auth';
-import { buildSessionCookie, clearSessionCookieForPath } from '@/app/lib/session';
+import {
+  buildSessionCookie,
+  clearSessionCookieForPath,
+  REFRESH_COOKIE_NAME,
+} from '@/app/lib/session';
 import { coerceRows, runBooktolQuery, sqlString } from '@/app/lib/booktol';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const token = String(body?.token || '');
+    const body = await req.json().catch(() => ({}));
+    const tokenFromBody = String(body?.token || '');
+    const tokenFromCookie = req.cookies.get(REFRESH_COOKIE_NAME)?.value || '';
+    const token = tokenFromBody || tokenFromCookie;
     if (!token) {
       return NextResponse.json({ error: 'Missing token' }, { status: 400 });
     }
