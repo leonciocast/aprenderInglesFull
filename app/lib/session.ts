@@ -8,26 +8,30 @@ const SESSION_TTL_DAYS = 36500;
 export function buildSessionCookie(token: string) {
   const maxAge = SESSION_TTL_DAYS * 24 * 60 * 60;
   const secure = process.env.NODE_ENV === 'production';
+  const domain = process.env.AUTH_COOKIE_DOMAIN;
   const parts = [
     `${SESSION_COOKIE_NAME}=${token}`,
     `Max-Age=${maxAge}`,
-    'Path=/uploader',
+    'Path=/',
     'HttpOnly',
     'SameSite=Lax',
   ];
+  if (domain) parts.push(`Domain=${domain}`);
   if (secure) parts.push('Secure');
   return parts.join('; ');
 }
 
 export function clearSessionCookie() {
   const secure = process.env.NODE_ENV === 'production';
+  const domain = process.env.AUTH_COOKIE_DOMAIN;
   const parts = [
     `${SESSION_COOKIE_NAME}=`,
     'Max-Age=0',
-    'Path=/uploader',
+    'Path=/',
     'HttpOnly',
     'SameSite=Lax',
   ];
+  if (domain) parts.push(`Domain=${domain}`);
   if (secure) parts.push('Secure');
   return parts.join('; ');
 }
