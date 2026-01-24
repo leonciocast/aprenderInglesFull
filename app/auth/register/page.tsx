@@ -6,7 +6,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextParam = useMemo(() => searchParams.get('next') || '', [searchParams]);
+  const nextParam = useMemo(
+    () => searchParams.get('next') || '/courses',
+    [searchParams],
+  );
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,7 +39,7 @@ function RegisterForm() {
       const res = await fetch('/uploader/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, next: nextParam }),
       });
       const data = await res.json();
       if (!res.ok) {

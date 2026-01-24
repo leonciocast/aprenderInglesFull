@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { hashToken } from '@/app/lib/auth';
+import { generateToken, hashToken } from '@/app/lib/auth';
 import { coerceRows, runBooktolQuery, sqlString } from '@/app/lib/booktol';
+import { buildSessionCookie } from '@/app/lib/session';
 
 export const runtime = 'nodejs';
 
@@ -40,7 +41,27 @@ export async function GET(req: NextRequest) {
     `;
     await runBooktolQuery(consumeSql);
 
-    return NextResponse.json({ ok: true });
+    const sessionToken = generateToken(32);
+    const sessionHash = hashToken(sessionToken);
+    const userAgent = req.headers.get('user-agent') || '';
+    const forwardedFor = req.headers.get('x-forwarded-for') || '';
+    const ipAddress = forwardedFor.split(',')[0]?.trim() || '';
+
+    const insertSessionSql = `
+      INSERT INTO sessions (user_id, token_hash, expires_at, user_agent, ip_address)
+      VALUES (
+        ${Number(record.user_id)},
+        '${sqlString(sessionHash)}',
+        NOW() + INTERVAL '30 days',
+        ${userAgent ? `'${sqlString(userAgent)}'` : 'NULL'},
+        ${ipAddress ? `'${sqlString(ipAddress)}'` : 'NULL'}
+      )
+    `;
+    await runBooktolQuery(insertSessionSql);
+
+    const res = NextResponse.json({ ok: true });
+    res.headers.set('Set-Cookie', buildSessionCookie(sessionToken));
+    return res;
   } catch (err: any) {
     console.error('Verify error:', err);
     return NextResponse.json({ error: err.message || String(err) }, { status: 500 });

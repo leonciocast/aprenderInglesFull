@@ -35,12 +35,21 @@ function extractPatternHint(message: string) {
   return 'Formato requerido: correo válido (nombre@dominio.com) y contraseña mínima de 8 caracteres.';
 }
 
+function sanitizeNext(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('/')) return '';
+  if (trimmed.startsWith('//')) return '';
+  if (trimmed.startsWith('/api') || trimmed.startsWith('/auth')) return '';
+  return trimmed;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const email = String(body?.email || '').trim().toLowerCase();
     const name = String(body?.name || '').trim();
     const password = String(body?.password || '');
+    const nextParam = sanitizeNext(String(body?.next || '')) || '/courses';
 
     if (!email || !password || !isValidEmail(email)) {
       return NextResponse.json(
@@ -112,7 +121,7 @@ export async function POST(req: NextRequest) {
     `;
     await runBooktolQuery(insertTokenSql);
 
-    const verifyUrl = `${getBaseUrl()}/auth/verify?token=${token}`;
+    const verifyUrl = `${getBaseUrl()}/auth/verify?token=${token}${nextParam ? `&next=${encodeURIComponent(nextParam)}` : ''}`;
 
     const transporter = createTransporter();
     const fromName = process.env.EMAIL_FROM_NAME || 'AprenderInglesFull';

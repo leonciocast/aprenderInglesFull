@@ -321,6 +321,24 @@ export default function CoursesPage() {
             {loading && <p>Cargando cursos…</p>}
             {error && <p style={{ color: '#f87171' }}>{error}</p>}
             <div className="courses-grid">
+              <button
+                type="button"
+                onClick={() => router.push('/principiantes')}
+                className="course-card"
+              >
+                <div className="course-thumb">
+                  <span>Libro</span>
+                </div>
+                <div className="course-meta">Libro</div>
+                <div className="course-title">Principiantes</div>
+                <div className="course-desc">
+                  Juegos y capítulos interactivos para empezar desde cero.
+                </div>
+                <div className="course-footer">
+                  <span>Abrir</span>
+                  <span>→</span>
+                </div>
+              </button>
               {courses.map(course => (
                 <button
                   key={course.id}

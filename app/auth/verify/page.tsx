@@ -1,13 +1,25 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+
+const sanitizeNext = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('/')) return '';
+  if (trimmed.startsWith('//')) return '';
+  if (trimmed.startsWith('/api') || trimmed.startsWith('/auth')) return '';
+  return trimmed;
+};
 
 function VerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  const nextParam = useMemo(
+    () => sanitizeNext(searchParams.get('next') || '') || '/courses',
+    [searchParams],
+  );
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -17,18 +29,23 @@ function VerifyContent() {
       return;
     }
 
-    fetch(`/uploader/api/auth/verify?token=${encodeURIComponent(token)}`)
+    fetch(
+      `/uploader/api/auth/verify?token=${encodeURIComponent(token)}${
+        nextParam ? `&next=${encodeURIComponent(nextParam)}` : ''
+      }`,
+    )
       .then(async res => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Verification failed');
         setStatus('ok');
-        setMessage('Cuenta verificada. Ya puedes iniciar sesión.');
+        setMessage('Cuenta verificada. Entrando…');
+        router.replace(nextParam);
       })
       .catch(err => {
         setStatus('error');
         setMessage(err.message || String(err));
       });
-  }, [searchParams]);
+  }, [searchParams, nextParam, router]);
 
   return (
     <main className="ui-shell ui-shell--light" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -46,11 +63,11 @@ function VerifyContent() {
         {status === 'ok' && (
           <button
             type="button"
-            onClick={() => router.push('/auth/login')}
+            onClick={() => router.push(nextParam)}
             className="ui-button ui-button-primary"
             style={{ marginTop: 16 }}
           >
-            Ir a iniciar sesión
+            Continuar
           </button>
         )}
       </div>
