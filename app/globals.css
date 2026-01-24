@@ -1920,18 +1920,18 @@ button {
     display: contents;
   }
   .quiz-header > div {
+    display: none;
+  }
+  .quiz-question,
+  .quiz-result-card {
     order: 1;
   }
   .quiz-progress {
     order: 2;
     margin-bottom: 14px;
   }
-  .quiz-question,
-  .quiz-result-card {
-    order: 3;
-  }
   .quiz-header > button.ui-button {
-    order: 4;
+    order: 3;
     justify-self: start;
     margin-top: 12px;
     background: #ffffff;
