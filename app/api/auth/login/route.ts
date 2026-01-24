@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       VALUES (
         ${Number(user.id)},
         '${sqlString(sessionHash)}',
-        NOW() + INTERVAL '30 days',
+        NOW() + INTERVAL '36500 days',
         ${userAgent ? `'${sqlString(userAgent)}'` : 'NULL'},
         ${ipAddress ? `'${sqlString(ipAddress)}'` : 'NULL'}
       )

@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
       VALUES (
         ${Number(record.user_id)},
         '${sqlString(sessionHash)}',
-        NOW() + INTERVAL '30 days',
+        NOW() + INTERVAL '36500 days',
         ${userAgent ? `'${sqlString(userAgent)}'` : 'NULL'},
         ${ipAddress ? `'${sqlString(ipAddress)}'` : 'NULL'}
       )

@@ -3,7 +3,7 @@ import { hashToken } from './auth';
 import { coerceRows, runBooktolQuery, sqlString } from './booktol';
 
 export const SESSION_COOKIE_NAME = 'aif_session';
-const SESSION_TTL_DAYS = 30;
+const SESSION_TTL_DAYS = 36500;
 
 export function buildSessionCookie(token: string) {
   const maxAge = SESSION_TTL_DAYS * 24 * 60 * 60;
