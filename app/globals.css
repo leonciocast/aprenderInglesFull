@@ -1916,6 +1916,44 @@ button {
   .quiz-header h1 {
     font-size: 22px;
   }
+  .quiz-header {
+    display: contents;
+  }
+  .quiz-header > div {
+    order: 1;
+  }
+  .quiz-progress {
+    order: 2;
+    margin-bottom: 14px;
+  }
+  .quiz-question,
+  .quiz-result-card {
+    order: 3;
+  }
+  .quiz-header > button.ui-button {
+    order: 4;
+    justify-self: start;
+    margin-top: 12px;
+    background: #ffffff;
+    border: 1px solid #d7dbef;
+    color: #1f2a44;
+    padding: 8px 14px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 16px rgba(27, 37, 64, 0.08);
+  }
+  .quiz-header > button.ui-button::before {
+    content: '←';
+    font-weight: 700;
+  }
+  .quiz-question {
+    padding: 12px;
+  }
+  .quiz-question img {
+    height: 200px !important;
+  }
 }
 
 #__next-build-watcher {
