@@ -222,8 +222,8 @@ export default function OrdinalesPage() {
     const sources = variants.flatMap(name => {
       const encodedName = encodeURIComponent(name);
       return [
-        `${AUDIO_BASE}/${encodedName}.wav`,
         `${AUDIO_API_BASE}?name=${encodedName}`,
+        `${AUDIO_BASE}/${encodedName}.wav`,
       ];
     });
     const tryNext = () => {
