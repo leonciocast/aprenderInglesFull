@@ -81,6 +81,9 @@ const toAudioName = (value: string) => {
   if (!value) return '';
   const normalized = value.normalize('NFC').toLowerCase();
   const mapped = ordinalMap[normalized] || value;
+  if (mapped.toLowerCase() === 'one hundredth') {
+    return 'Ordinal_numbers_One hundredth';
+  }
   const label = mapped
     .split(' ')
     .filter(Boolean)
