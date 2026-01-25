@@ -12,27 +12,27 @@ type Question = {
 };
 
 const ORDINAL_FILES = [
-  'Centésimo-cinco-ocho.png',
-  'Cuadragésimo-cinco-ocho.png',
+  'Centésimo-cinco-ocho.png',
+  'Cuadragésimo-cinco-ocho.png',
   'Cuarto-cinco-oche.png',
   'Decimonoveno-cinco-ocho.png',
   'Decimooctavo-cinco-ocho.png',
   'Decimosexto-cinco-ocho.png',
-  'Decimoséptimo.png',
-  'Décimo-cinco-oche.png',
+  'Decimoséptimo.png',
+  'Décimo-cinco-oche.png',
   'Noveno-cinco-oche.png',
   'Octavo-cinco-oche.png',
   'Primero-cinco-oche.png',
   'Quinto-cinco-oche.png',
   'Segundo-cinco-oche.png',
   'Sexto-cinco-oche.png',
-  'Séptimo-cinco-oche.png',
+  'Séptimo-cinco-oche.png',
   'Tercero-cinco-oche.png',
-  'Trigésimo-cinco-ocho.png',
-  'Undécimo-cinco-oche.png',
-  'Vegésimoprimero.png',
-  'Vigésimo-cinco-ocho.png',
-  'duodécimo-cinco-ocho.png',
+  'Trigésimo-cinco-ocho.png',
+  'Undécimo-cinco-oche.png',
+  'Vegésimoprimero.png',
+  'Vigésimo-cinco-ocho.png',
+  'duodécimo-cinco-ocho.png',
 ];
 
 const ORDINAL_STOPWORDS = ['cinco', 'ocho', 'oche'];
