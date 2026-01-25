@@ -38,6 +38,7 @@ const ORDINAL_FILES = [
 const ORDINAL_STOPWORDS = ['cinco', 'ocho', 'oche'];
 const IMAGE_BASE = '/uploader/image/Numeros_ordinales';
 const AUDIO_BASE = '/uploader/Audio/Ordinal_numbers';
+const AUDIO_API_BASE = '/uploader/api/audio/ordinal';
 
 const ORDINAL_ENTRIES: Array<[string[], string]> = [
   [['primero'], 'First'],
@@ -218,11 +219,18 @@ export default function OrdinalesPage() {
       `Ordinal_numbers_${base.toUpperCase()}`,
     ];
     let idx = 0;
+    const sources = variants.flatMap(name => {
+      const encodedName = encodeURIComponent(name);
+      return [
+        `${AUDIO_BASE}/${encodedName}.wav`,
+        `${AUDIO_API_BASE}?name=${encodedName}`,
+      ];
+    });
     const tryNext = () => {
-      if (idx >= variants.length) return;
-      const name = variants[idx];
+      if (idx >= sources.length) return;
+      const src = sources[idx];
       idx += 1;
-      audio.src = encodeURI(`${AUDIO_BASE}/${name}.wav`);
+      audio.src = src;
       audio.currentTime = 0;
       void audio.play();
     };
