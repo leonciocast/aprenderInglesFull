@@ -31,10 +31,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 400 });
     }
 
+    const userId = Number(record.user_id);
+
     const verifySql = `
       UPDATE users_aprenderIngles
       SET is_verified = TRUE
-      WHERE id = ${Number(record.user_id)}
+      WHERE id = ${userId}
     `;
     await runBooktolQuery(verifySql);
 
@@ -45,6 +47,19 @@ export async function GET(req: NextRequest) {
     `;
     await runBooktolQuery(consumeSql);
 
+    const enrollSql = `
+      INSERT INTO enrollments (user_id, course_id)
+      SELECT ${userId}, c.id
+      FROM courses c
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM enrollments e
+        WHERE e.user_id = ${userId}
+          AND e.course_id = c.id
+      )
+    `;
+    await runBooktolQuery(enrollSql);
+
     const sessionToken = generateToken(32);
     const sessionHash = hashToken(sessionToken);
     const userAgent = req.headers.get('user-agent') || '';
@@ -54,7 +69,7 @@ export async function GET(req: NextRequest) {
     const insertSessionSql = `
       INSERT INTO sessions (user_id, token_hash, expires_at, user_agent, ip_address)
       VALUES (
-        ${Number(record.user_id)},
+        ${userId},
         '${sqlString(sessionHash)}',
         NOW() + INTERVAL '36500 days',
         ${userAgent ? `'${sqlString(userAgent)}'` : 'NULL'},
