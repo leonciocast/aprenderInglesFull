@@ -31,7 +31,7 @@ export default function CourseDetailPage() {
         const res = await fetch(`/uploader/api/courses/${courseId}`);
         const data = await res.json();
         if (res.status === 401) {
-          router.replace('/auth/login');
+          router.replace(`/auth/login?next=${encodeURIComponent(`/courses/${courseId}`)}`);
           return;
         }
         if (!res.ok) throw new Error(data.error || 'Failed to load course');

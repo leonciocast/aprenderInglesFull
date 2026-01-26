@@ -23,7 +23,7 @@ export default function QuizListPage() {
         const res = await fetch('/uploader/api/quizzes');
         const data = await res.json();
         if (res.status === 401) {
-          router.replace('/auth/login');
+          router.replace(`/auth/login?next=${encodeURIComponent('/quiz')}`);
           return;
         }
         if (!res.ok) throw new Error(data.error || 'Failed to load quizzes');

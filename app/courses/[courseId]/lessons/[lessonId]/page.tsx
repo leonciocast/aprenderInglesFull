@@ -55,7 +55,8 @@ export default function CourseLessonPage() {
       .then(async res => {
         const data = await res.json();
         if (res.status === 401) {
-          router.replace('/auth/login');
+          const nextPath = `/courses/${courseId}/lessons/${lessonId}`;
+          router.replace(`/auth/login?next=${encodeURIComponent(nextPath)}`);
           return;
         }
         if (!res.ok) throw new Error(data.error || 'Failed to load course');

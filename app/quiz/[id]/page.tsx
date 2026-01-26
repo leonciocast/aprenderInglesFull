@@ -67,7 +67,7 @@ export default function QuizPage() {
         const quizRes = await fetch(`/uploader/api/quizzes/${quizId}`);
         const quizData = await quizRes.json();
         if (quizRes.status === 401) {
-          router.replace('/auth/login');
+          router.replace(`/auth/login?next=${encodeURIComponent(`/quiz/${quizId}`)}`);
           return;
         }
         if (!quizRes.ok) throw new Error(quizData.error || 'Failed to load quiz');

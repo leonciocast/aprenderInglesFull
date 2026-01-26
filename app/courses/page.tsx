@@ -101,7 +101,7 @@ export default function CoursesPage() {
       try {
         const meRes = await fetchMeWithRefresh();
         if (!meRes.ok) {
-          router.replace('/auth/login');
+          router.replace(`/auth/login?next=${encodeURIComponent('/courses')}`);
           return;
         }
         const meData = await meRes.json();
@@ -349,7 +349,9 @@ export default function CoursesPage() {
                       const res = await fetch(`/uploader/api/courses/${course.id}`);
                       const data = await res.json();
                       if (res.status === 401) {
-                        router.replace('/auth/login');
+                        router.replace(
+                          `/auth/login?next=${encodeURIComponent(`/courses/${course.id}`)}`,
+                        );
                         return;
                       }
                       const firstLesson = (data.lessons || [])[0];
