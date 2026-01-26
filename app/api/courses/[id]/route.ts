@@ -42,7 +42,21 @@ export async function GET(req: NextRequest, ctx: any) {
     `;
     const lessonRows = coerceRows(await runBooktolQuery(lessonsSql));
 
-    const lessonIds = lessonRows
+    const PROMBRES_VIDEO_URL = '/uploader/api/video/pronombres';
+    const PROMBRES_TITLE = 'Prombres';
+    const normalizedLessons = lessonRows.map((row: any) => {
+      const lessonId = Number(row.id);
+      if (courseId === 9 && lessonId === 9) {
+        return {
+          ...row,
+          title: PROMBRES_TITLE,
+          video_url: PROMBRES_VIDEO_URL,
+        };
+      }
+      return row;
+    });
+
+    const lessonIds = normalizedLessons
       .map((row: any) => Number(row.id))
       .filter((id: number) => Number.isFinite(id));
 
@@ -67,7 +81,7 @@ export async function GET(req: NextRequest, ctx: any) {
       });
     });
 
-    const lessons = lessonRows.map((row: any) => {
+    const lessons = normalizedLessons.map((row: any) => {
       const lessonId = Number(row.id);
       const progress = progressMap.get(lessonId);
       return {

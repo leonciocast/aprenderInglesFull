@@ -334,6 +334,7 @@ export default function CourseLessonPage() {
   const handleTogglePlay = () => {
     const el = videoRef.current;
     if (!el) return;
+    if (!videoSrc) return;
     if (isPlaying) {
       el.pause();
     } else {
