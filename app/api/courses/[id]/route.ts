@@ -42,15 +42,21 @@ export async function GET(req: NextRequest, ctx: any) {
     `;
     const lessonRows = coerceRows(await runBooktolQuery(lessonsSql));
 
-    const PROMBRES_VIDEO_URL = '/uploader/api/video/pronombres';
-    const PROMBRES_TITLE = 'Prombres';
+    const PRONOMBRES_KEY = 'Pronombres_1.mp4';
+    const rawVideoBase =
+      process.env.COURSE_VIDEO_BASE_URL || process.env.CLOUDFRONT_BASE_URL || '';
+    const normalizedVideoBase = rawVideoBase.trim().replace(/\/$/, '');
+    const PRONOMBRES_VIDEO_URL = normalizedVideoBase
+      ? `${normalizedVideoBase}/${PRONOMBRES_KEY}`
+      : '/uploader/api/video/pronombres';
+    const PRONOMBRES_TITLE = 'Pronombres';
     const normalizedLessons = lessonRows.map((row: any) => {
       const lessonId = Number(row.id);
       if (courseId === 9 && lessonId === 9) {
         return {
           ...row,
-          title: PROMBRES_TITLE,
-          video_url: PROMBRES_VIDEO_URL,
+          title: PRONOMBRES_TITLE,
+          video_url: PRONOMBRES_VIDEO_URL,
         };
       }
       return row;
