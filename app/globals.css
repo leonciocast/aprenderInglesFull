@@ -2003,6 +2003,25 @@ button {
   }
 }
 
+@media (max-width: 720px) {
+  .lesson-content {
+    display: flex;
+    flex-direction: column;
+  }
+  .lesson-player {
+    order: 1;
+  }
+  .lesson-header {
+    order: 2;
+  }
+  .lesson-progress {
+    order: 3;
+  }
+  .lesson-notes {
+    order: 4;
+  }
+}
+
 @media (max-width: 960px) {
   .student-layout {
     grid-template-columns: 1fr;

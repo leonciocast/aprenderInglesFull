@@ -561,7 +561,7 @@ export default function CourseLessonPage() {
         </aside>
 
         <div className="lesson-content">
-          <header style={{ marginBottom: 20 }}>
+          <header className="lesson-header" style={{ marginBottom: 20 }}>
             <h1 style={{ fontSize: 28, marginBottom: 6, color: '#192335' }}>{lesson.title}</h1>
             {lesson.notes && (
               <p className="ui-muted" style={{ maxWidth: 720 }}>{lesson.notes}</p>
