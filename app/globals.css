@@ -2008,6 +2008,12 @@ button {
     display: flex;
     flex-direction: column;
   }
+  .lesson-content {
+    order: 1;
+  }
+  .lesson-sidebar {
+    order: 2;
+  }
   .lesson-player {
     order: 1;
   }
