@@ -43,6 +43,7 @@ export async function GET(req: NextRequest, ctx: any) {
     const lessonRows = coerceRows(await runBooktolQuery(lessonsSql));
 
     const PRONOMBRES_KEY = 'Pronombres_1.mp4';
+    const VERBO_TO_BE_KEY = 'Verbo+to+be_1.mp4';
     const rawVideoBase =
       process.env.COURSE_VIDEO_BASE_URL || process.env.CLOUDFRONT_BASE_URL || '';
     const normalizedVideoBase = rawVideoBase.trim().replace(/\/$/, '');
@@ -50,6 +51,10 @@ export async function GET(req: NextRequest, ctx: any) {
       ? `${normalizedVideoBase}/${PRONOMBRES_KEY}`
       : '/uploader/api/video/pronombres';
     const PRONOMBRES_TITLE = 'Pronombres';
+    const VERBO_TO_BE_VIDEO_URL = normalizedVideoBase
+      ? `${normalizedVideoBase}/${VERBO_TO_BE_KEY}`
+      : VERBO_TO_BE_KEY;
+    const VERBO_TO_BE_TITLE = 'Verbo to be';
     const normalizedLessons = lessonRows.map((row: any) => {
       const lessonId = Number(row.id);
       if (courseId === 9 && lessonId === 9) {
@@ -57,6 +62,13 @@ export async function GET(req: NextRequest, ctx: any) {
           ...row,
           title: PRONOMBRES_TITLE,
           video_url: PRONOMBRES_VIDEO_URL,
+        };
+      }
+      if (courseId === 9 && lessonId === 10) {
+        return {
+          ...row,
+          title: VERBO_TO_BE_TITLE,
+          video_url: VERBO_TO_BE_VIDEO_URL,
         };
       }
       return row;
