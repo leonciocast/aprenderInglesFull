@@ -23,6 +23,14 @@ const TRANSPORT_FILES = [
   'Truck-chair-sofa.png',
 ];
 
+const TRANSPORT_CORRECT_MAP: Record<string, string> = {
+  'Car-chair-sofa.png': 'Helicopter',
+  'Helicopter-chair-sofa.png': 'Hot_air_ballon',
+  'Hot_air_ballon-chair-sofa.png': 'Train',
+  'Train-chair-sofa.png': 'Truck',
+  'Truck-chair-sofa.png': 'Car',
+};
+
 const TRANSPORT_STOPWORDS = ['chair', 'sofa'];
 const IMAGE_BASE = '/uploader/image/Transportation';
 const AUDIO_BASE = '/uploader/Audio/Transportation';
@@ -69,6 +77,8 @@ function shuffleWithSeed<T>(items: T[], seed: number) {
 
 function buildQuestions(): Question[] {
   const correctList = TRANSPORT_FILES.map(file => {
+    const mapped = TRANSPORT_CORRECT_MAP[file];
+    if (mapped) return mapped;
     const base = file.replace(/\.[^.]+$/, '');
     const parts = base
       .split('-')
@@ -79,16 +89,20 @@ function buildQuestions(): Question[] {
 
   return TRANSPORT_FILES.map(file => {
     const base = file.replace(/\.[^.]+$/, '');
-    const parts = base
-      .split('-')
-      .filter(Boolean)
-      .filter(part => !TRANSPORT_STOPWORDS.includes(part.toLowerCase()));
-    const [correct, alt1, alt2] = parts;
+    const correct = TRANSPORT_CORRECT_MAP[file] ?? (() => {
+      const parts = base
+        .split('-')
+        .filter(Boolean)
+        .filter(part => !TRANSPORT_STOPWORDS.includes(part.toLowerCase()));
+      return parts[0];
+    })();
+    if (!correct) {
+      throw new Error(`Missing transport mapping for ${file}`);
+    }
     const fallbackPool = correctList.filter(item => item && item !== correct);
     const fallbackSeed = hashString(`${file}-fallback`);
     const fallbackShuffled = shuffleWithSeed(fallbackPool, fallbackSeed);
-    const merged = [correct, alt1, alt2]
-      .filter(Boolean)
+    const merged = [correct]
       .concat(fallbackShuffled)
       .filter((value, index, arr) => arr.indexOf(value) === index)
       .slice(0, 3);

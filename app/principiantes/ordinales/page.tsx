@@ -35,6 +35,30 @@ const ORDINAL_FILES = [
   'duodécimo-cinco-ocho.png',
 ];
 
+const ORDINAL_CORRECT_MAP: Record<string, string> = {
+  'Centésimo-cinco-ocho.png': 'decimooctavo',
+  'Cuadragésimo-cinco-ocho.png': 'octavo',
+  'Cuarto-cinco-oche.png': 'undécimo',
+  'Decimonoveno-cinco-ocho.png': 'decimoquinto',
+  'Decimooctavo-cinco-ocho.png': 'quinto',
+  'Decimosexto-cinco-ocho.png': 'primero',
+  'Decimoséptimo.png': 'cuadragésimo',
+  'Décimo-cinco-oche.png': 'decimocuarto',
+  'Noveno-cinco-oche.png': 'cuarto',
+  'Octavo-cinco-oche.png': 'decimonoveno',
+  'Primero-cinco-oche.png': 'noveno',
+  'Quinto-cinco-oche.png': 'centésimo',
+  'Segundo-cinco-oche.png': 'segundo',
+  'Sexto-cinco-oche.png': 'decimoséptimo',
+  'Séptimo-cinco-oche.png': 'séptimo',
+  'Tercero-cinco-oche.png': 'decimosexto',
+  'Trigésimo-cinco-ocho.png': 'sexto',
+  'Undécimo-cinco-oche.png': 'décimo',
+  'Vegésimoprimero.png': 'tercero',
+  'Vigésimo-cinco-ocho.png': 'decimotercero',
+  'duodécimo-cinco-ocho.png': 'trigésimo',
+};
+
 const ORDINAL_STOPWORDS = ['cinco', 'ocho', 'oche'];
 const IMAGE_BASE = '/uploader/image/Numeros_ordinales';
 const AUDIO_BASE = '/uploader/Audio/Ordinal_numbers';
@@ -122,6 +146,8 @@ function shuffleWithSeed<T>(items: T[], seed: number) {
 
 function buildQuestions(): Question[] {
   const correctList = ORDINAL_FILES.map(file => {
+    const mapped = ORDINAL_CORRECT_MAP[file];
+    if (mapped) return mapped;
     const base = file.replace(/\.[^.]+$/, '');
     const parts = base
       .split('-')
@@ -132,17 +158,21 @@ function buildQuestions(): Question[] {
 
   return ORDINAL_FILES.map(file => {
     const base = file.replace(/\.[^.]+$/, '');
-    const parts = base
-      .split('-')
-      .filter(Boolean)
-      .filter(part => !ORDINAL_STOPWORDS.includes(part.toLowerCase()));
-    const [correct, alt1, alt2] = parts;
+    const correct = ORDINAL_CORRECT_MAP[file] ?? (() => {
+      const parts = base
+        .split('-')
+        .filter(Boolean)
+        .filter(part => !ORDINAL_STOPWORDS.includes(part.toLowerCase()));
+      return parts[0];
+    })();
+    if (!correct) {
+      throw new Error(`Missing ordinal mapping for ${file}`);
+    }
     const fallbackPool = correctList.filter(item => item && item !== correct);
     const fallbackSeed = hashString(`${file}-fallback`);
     const fallbackShuffled = shuffleWithSeed(fallbackPool, fallbackSeed);
 
-    const options = [correct, alt1, alt2]
-      .filter(Boolean)
+    const options = [correct]
       .concat(fallbackShuffled)
       .filter((value, index, arr) => arr.indexOf(value) === index)
       .slice(0, 3);

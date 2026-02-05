@@ -16,10 +16,10 @@ const BODY_PART_FILES = [
   'ear-nose-mouth.png',
   'eye-nose-mouth.png',
   'hand-mouth-nose.png',
-  'knee-nose-mouth.png',
+  'knee-mouth-hand.png',
   'leg-nose-mouth.png',
-  'mouth-nose-eye.png',
-  'nose-mouth-hand.png',
+  'mouth-nose-mouth.png',
+  'nose-mouth-eye.png',
 ];
 
 const IMAGE_BASE = '/uploader/image/BodyParts';

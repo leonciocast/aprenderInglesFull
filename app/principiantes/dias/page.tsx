@@ -21,6 +21,16 @@ const WEEKDAY_FILES = [
   'viernes-febrero-marzo.png',
 ];
 
+const WEEKDAY_CORRECT_MAP: Record<string, string> = {
+  'domingo-febrero-marzo.png': 'viernes',
+  'jueves-febrero-marzo.png': 'lunes',
+  'lunes-febrero-marzo.png': 'sábado',
+  'martes--febrero-marzo.png': 'domingo',
+  'miércoles-febrero-marzo.png': 'jueves',
+  'sábado-febrero-marzo.png': 'martes',
+  'viernes-febrero-marzo.png': 'miércoles',
+};
+
 const WEEKDAY_STOPWORDS = ['febrero', 'marzo'];
 const IMAGE_BASE = '/uploader/image/Weekdays';
 const AUDIO_BASE = '/uploader/Audio/Weekdays';
@@ -84,6 +94,8 @@ function parseOptions(file: string) {
 
 function buildQuestions(): Question[] {
   const correctList = WEEKDAY_FILES.map(file => {
+    const mapped = WEEKDAY_CORRECT_MAP[file];
+    if (mapped) return mapped;
     const base = file.replace(/\.[^.]+$/, '');
     const parts = base
       .split('-')
@@ -93,11 +105,15 @@ function buildQuestions(): Question[] {
   }).filter(Boolean);
 
   return WEEKDAY_FILES.map(file => {
-    const { base, correct, options } = parseOptions(file);
+    const base = file.replace(/\.[^.]+$/, '');
+    const correct = WEEKDAY_CORRECT_MAP[file] ?? parseOptions(file).correct;
+    if (!correct) {
+      throw new Error(`Missing weekday mapping for ${file}`);
+    }
     const fallbackPool = correctList.filter(item => item && item !== correct);
     const fallbackSeed = hashString(`${file}-fallback`);
     const fallbackShuffled = shuffleWithSeed(fallbackPool, fallbackSeed);
-    const merged = options
+    const merged = [correct]
       .concat(fallbackShuffled)
       .filter((value, index, arr) => arr.indexOf(value) === index)
       .slice(0, 3);

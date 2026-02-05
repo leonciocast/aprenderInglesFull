@@ -41,7 +41,7 @@ const NUMBER_FILES = [
   'Twenty.png',
   'Two.png',
   'Zero.png',
-  'ten.png',
+  'Ten.png',
 ];
 
 const NUMBER_STOPWORDS: string[] = [];

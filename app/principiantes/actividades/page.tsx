@@ -13,13 +13,13 @@ type Question = {
 
 const ACTIVITY_FILES = [
   'Cooking-chair-sofa.png',
-  'Dance-chair-sofa.png',
+  'Dancing-chair-sofa.png',
   'Drawing-chair-sofa.png',
   'Gardening-chair-sofa.png',
   'Painting-chair-sofa.png',
-  'Play_guitar-chair-sofa.png',
+  'Playing_guitar-chair-sofa.png',
   'Reading-chair-sofa.png',
-  'Taking_photo-chair-sofa.png',
+  'Taking_photos-chair-sofa.png',
   'Working_out-chair-sofa.png',
 ];
 
@@ -28,9 +28,9 @@ const IMAGE_BASE = '/uploader/image/Activities';
 const AUDIO_BASE = '/uploader/Audio/Activities';
 
 const activityMap: Record<string, string> = {
-  dance: 'Dancing',
-  play_guitar: 'Playing guitar',
-  taking_photo: 'Taking photos',
+  dancing: 'Dancing',
+  playing_guitar: 'Playing guitar',
+  taking_photos: 'Taking photos',
   working_out: 'Working out',
 };
 

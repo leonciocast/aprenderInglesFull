@@ -26,6 +26,11 @@ const MONTH_FILES = [
   'Septiembre-one-two.png',
 ];
 
+const MONTH_CORRECT_MAP: Record<string, string> = {
+  'Enero-one-two.png': 'febrero',
+  'Febrero-one-two.png': 'enero',
+};
+
 const MONTH_STOPWORDS = ['one', 'two'];
 const IMAGE_BASE = '/uploader/image/Months';
 const AUDIO_BASE = '/uploader/Audio/Months';
@@ -92,6 +97,8 @@ function parseOptions(file: string) {
 
 function buildQuestions(): Question[] {
   const correctList = MONTH_FILES.map(file => {
+    const mapped = MONTH_CORRECT_MAP[file];
+    if (mapped) return mapped;
     const base = file.replace(/\.[^.]+$/, '');
     const parts = base
       .split('-')
@@ -101,11 +108,15 @@ function buildQuestions(): Question[] {
   }).filter(Boolean);
 
   return MONTH_FILES.map(file => {
-    const { base, correct, options } = parseOptions(file);
+    const base = file.replace(/\.[^.]+$/, '');
+    const correct = MONTH_CORRECT_MAP[file] ?? parseOptions(file).correct;
+    if (!correct) {
+      throw new Error(`Missing month mapping for ${file}`);
+    }
     const fallbackPool = correctList.filter(item => item && item !== correct);
     const fallbackSeed = hashString(`${file}-fallback`);
     const fallbackShuffled = shuffleWithSeed(fallbackPool, fallbackSeed);
-    const merged = options
+    const merged = [correct]
       .concat(fallbackShuffled)
       .filter((value, index, arr) => arr.indexOf(value) === index)
       .slice(0, 3);
