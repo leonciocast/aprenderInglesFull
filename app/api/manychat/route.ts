@@ -6,10 +6,12 @@ export const runtime = 'nodejs';
 
 const RESOURCE_PDF_MAP: Record<string, string> = {
   'guia-maestra-linking': 'La Guía Maestra de Linking.pdf',
+  '7-patrones-de-enlace': '7_Patrones_de_Enlace.pdf',
 };
 
 const RESOURCE_TITLE_MAP: Record<string, string> = {
   'guia-maestra-linking': 'La Guía Maestra de Linking',
+  '7-patrones-de-enlace': '7 Patrones de enlace',
 };
 
 function isValidEmail(email: string) {
