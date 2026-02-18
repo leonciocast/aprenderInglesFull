@@ -254,8 +254,8 @@ export async function POST(req: NextRequest) {
     
     if (existingId) {
       return NextResponse.json(
-        { error: 'Email already exists', id: existingId },
-        { status: 409 },
+        { ok: true, id: existingId, duplicate: true },
+        { status: 200 },
       );
     }
 
