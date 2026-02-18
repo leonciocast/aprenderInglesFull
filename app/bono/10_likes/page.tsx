@@ -106,11 +106,23 @@ export default function Bono10LikesPage() {
         }
         .audio-logo {
           position: absolute;
-          top: 18px;
-          right: 18px;
-          width: 120px;
+          top: 12px;
+          right: 16px;
+          width: 96px;
           height: auto;
           opacity: 0.95;
+        }
+        @media (max-width: 720px) {
+          .audio-logo {
+            position: static;
+            align-self: flex-end;
+            margin-top: 4px;
+            margin-bottom: 8px;
+          }
+          .audio-bono-card {
+            display: flex;
+            flex-direction: column;
+          }
         }
         .audio-layout {
           display: grid;
