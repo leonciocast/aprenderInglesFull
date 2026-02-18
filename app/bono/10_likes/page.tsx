@@ -29,11 +29,13 @@ const INSTAGRAM_COMMUNITY_URL = 'https://www.instagram.com/channel/AbbHN4iC8_was
 const INSTAGRAM_QR_URL = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
   INSTAGRAM_COMMUNITY_URL,
 )}`;
+const BRAND_LOGO_URL = 'https://cdn.aprenderinglesfull.com/logo_ingles.png';
 
 export default function Bono10LikesPage() {
   return (
     <main className="auth-page ui-shell ui-shell--light">
       <div className="auth-card ui-card audio-bono-card">
+        <img className="audio-logo" src={BRAND_LOGO_URL} alt="AprenderInglesFull" />
         <span className="auth-pill">Bono</span>
         <h1>10 Likes</h1>
         <p className="auth-subtitle">
@@ -100,6 +102,15 @@ export default function Bono10LikesPage() {
         .audio-bono-card {
           max-width: 980px;
           width: 100%;
+          position: relative;
+        }
+        .audio-logo {
+          position: absolute;
+          top: 18px;
+          right: 18px;
+          width: 120px;
+          height: auto;
+          opacity: 0.95;
         }
         .audio-layout {
           display: grid;
