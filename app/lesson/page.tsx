@@ -1,152 +1,45 @@
-'use client';
+ 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-const DEFAULT_VIDEO_URL =
-  'https://aprenderinglesfull-pdfs.s3.us-east-1.amazonaws.com/Website_hook.mp4';
-const SEEK_SECONDS = 10;
-const NOTE_KEY_PREFIX = 'lesson-note:';
+type PublicLesson = {
+  id: string;
+  title: string;
+  src: string;
+  duration?: string;
+};
+
+const CDN_BASE = 'https://cdn.aprenderinglesfull.com';
+const PUBLIC_LESSONS: PublicLesson[] = [
+  {
+    id: '10-formas-like-it',
+    title: '10 formas de decir I like it',
+    src: `${CDN_BASE}/10%20likes.mp4`,
+    duration: '10:40',
+  },
+];
+
+const BRAND_LOGO_URL = 'https://cdn.aprenderinglesfull.com/logo_ingles.png';
 
 function LessonVideoContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [note, setNote] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
-  const [hasPreviewSeeked, setHasPreviewSeeked] = useState(false);
-  const [lastSavedNote, setLastSavedNote] = useState('');
-  const saveTimer = useRef<number | null>(null);
 
-  const videoSrc = useMemo(() => {
-    const src = searchParams.get('src');
-    if (!src) return DEFAULT_VIDEO_URL;
-    if (src.startsWith('https://')) return src;
-    return DEFAULT_VIDEO_URL;
-  }, [searchParams]);
+  const activeId = searchParams.get('lesson') || PUBLIC_LESSONS[0]?.id;
+  const activeLesson =
+    PUBLIC_LESSONS.find(item => item.id === activeId) || PUBLIC_LESSONS[0];
 
-  const title = 'Bienvenido.';
+  const title = activeLesson?.title || 'Lección';
+  const videoSrc = activeLesson?.src || '';
 
-  const lessonId = useMemo(() => {
-    const raw = searchParams.get('lessonId');
-    const value = raw ? Number(raw) : NaN;
-    return Number.isFinite(value) ? value : NaN;
-  }, [searchParams]);
-
-  useEffect(() => {
-    const key = Number.isFinite(lessonId)
-      ? `${NOTE_KEY_PREFIX}${lessonId}`
-      : `${NOTE_KEY_PREFIX}${videoSrc}`;
-    const saved = window.localStorage.getItem(key);
-    setNote(saved || '');
-    setLastSavedNote('');
-
-    if (!Number.isFinite(lessonId)) return;
-
-    let cancelled = false;
-    fetch(`/uploader/api/lesson-notes?lessonId=${lessonId}`)
-      .then(async res => {
-        const data = await res.json();
-        if (res.status === 401) {
-          return { note: '' };
-        }
-        if (!res.ok) throw new Error(data?.error || 'Failed to load note');
-        return data;
-      })
-      .then(data => {
-        if (cancelled) return;
-        const serverNote = String(data?.note || '');
-        if (serverNote && serverNote !== saved) {
-          window.localStorage.setItem(key, serverNote);
-          setNote(serverNote);
-        }
-        if (serverNote) {
-          setLastSavedNote(serverNote);
-        }
-      })
-      .catch(err => {
-        console.error('Load note error:', err);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [lessonId, videoSrc]);
-
-  useEffect(() => {
-    const key = Number.isFinite(lessonId)
-      ? `${NOTE_KEY_PREFIX}${lessonId}`
-      : `${NOTE_KEY_PREFIX}${videoSrc}`;
-    if (note.trim()) {
-      window.localStorage.setItem(key, note);
-    } else {
-      window.localStorage.removeItem(key);
-    }
-  }, [note, lessonId, videoSrc]);
-
-  const sendNote = (noteToSave: string, force = false) => {
-    if (!Number.isFinite(lessonId)) return;
-    if (!force && noteToSave === lastSavedNote) return;
-    if (!noteToSave.trim() && !lastSavedNote.trim() && !force) return;
-
-    fetch('/uploader/api/lesson-notes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      keepalive: true,
-      body: JSON.stringify({
-        note: noteToSave,
-        lessonId,
-      }),
-    })
-      .then(res => {
-        if (!res.ok) {
-          throw new Error('Failed to save note');
-        }
-        setLastSavedNote(noteToSave);
-      })
-      .catch(err => {
-        console.error('Save note error:', err);
-      });
+  const handleSelectLesson = (lessonId: string) => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.set('lesson', lessonId);
+    router.push(`/lesson?${next.toString()}`);
   };
-
-  useEffect(() => {
-    if (!Number.isFinite(lessonId)) return;
-    if (!note.trim() && !lastSavedNote.trim()) return;
-
-    if (saveTimer.current) {
-      window.clearTimeout(saveTimer.current);
-    }
-
-    saveTimer.current = window.setTimeout(() => {
-      sendNote(note);
-    }, 1200);
-
-    return () => {
-      if (saveTimer.current) {
-        window.clearTimeout(saveTimer.current);
-      }
-    };
-  }, [note, lessonId, lastSavedNote]);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        sendNote(note, true);
-      }
-    };
-
-    const handleBeforeUnload = () => {
-      sendNote(note, true);
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [note, lessonId, lastSavedNote]);
 
   const handleTogglePlay = () => {
     const el = videoRef.current;
@@ -165,250 +58,121 @@ function LessonVideoContent() {
     el.currentTime = next;
   };
 
-  const handleLoadedMetadata = () => {
-    const el = videoRef.current;
-    if (!el || hasPreviewSeeked) return;
-    if (Number.isFinite(el.duration) && el.duration > 0.2) {
-      el.currentTime = 0.1;
-    }
-  };
-
-  const handleSeeked = () => {
-    if (!hasPreviewSeeked) {
-      videoRef.current?.pause();
-      setHasPreviewSeeked(true);
-    }
-  };
-
   return (
-    <main
-      style={{
-        padding: 24,
-        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-        maxWidth: 1000,
-        margin: '0 auto',
-        minHeight: '100vh',
-        backgroundColor: '#020617',
-        color: '#e5e7eb',
-      }}
-    >
-      <header style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 28, marginBottom: 6 }}>{title}</h1>
-      </header>
+    <main className="ui-shell ui-shell--light">
+      <div className="lesson-layout" style={{ maxWidth: 1200, margin: '0 auto' }}>
+        <aside className="lesson-sidebar">
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+            <img
+              src={BRAND_LOGO_URL}
+              alt="AprenderInglesFull"
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: '#fff',
+                padding: 4,
+                border: '1px solid #ece9f8',
+              }}
+            />
+            <div>
+              <div className="ui-muted" style={{ fontSize: 12 }}>
+                Lecciones
+              </div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#192335' }}>
+                Inglés Full
+              </div>
+            </div>
+          </div>
+          <div className="ui-muted" style={{ fontSize: 12, marginBottom: 8 }}>
+            Playlist
+          </div>
+          <div className="lesson-list">
+            {PUBLIC_LESSONS.map(item => {
+              const isActive = item.id === activeLesson?.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`lesson-item${isActive ? ' lesson-item--active' : ''}`}
+                  onClick={() => handleSelectLesson(item.id)}
+                >
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{item.title}</div>
+                  {item.duration && (
+                    <div className="ui-muted" style={{ marginTop: 6, fontSize: 12 }}>
+                      {item.duration}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </aside>
 
-      <section
-        style={{
-          backgroundColor: '#0b1220',
-          borderRadius: 12,
-          border: '1px solid #1f2937',
-          padding: 16,
-          boxShadow: '0 20px 40px rgba(2, 6, 23, 0.35)',
-        }}
-      >
-        <div style={{ borderRadius: 12, overflow: 'hidden', backgroundColor: '#0f172a' }}>
-          <video
-            ref={videoRef}
-            src={videoSrc}
-            style={{ width: '100%', display: 'block' }}
-            preload="auto"
-            controls
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onEnded={() => setIsPlaying(false)}
-            onLoadedMetadata={handleLoadedMetadata}
-            onSeeked={handleSeeked}
-          />
-        </div>
+        <div className="lesson-content">
+          <header className="lesson-header" style={{ marginBottom: 20 }}>
+            <span className="auth-pill">Bono</span>
+            <h1 style={{ fontSize: 28, marginBottom: 6, color: '#192335' }}>{title}</h1>
+            <p className="ui-muted" style={{ maxWidth: 720 }}>
+              Domina expresiones reales con ejemplos claros y fáciles de recordar.
+            </p>
+          </header>
 
-        <div
-          style={{
-            marginTop: 14,
-            display: 'flex',
-            gap: 10,
-            flexWrap: 'wrap',
-          }}
-        >
-          <button
-            type="button"
-            onClick={handleTogglePlay}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 9999,
-              border: 'none',
-              backgroundColor: '#2563eb',
-              color: '#ffffff',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            {isPlaying ? (
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                aria-hidden="true"
-                focusable="false"
-                style={{ display: 'block' }}
-              >
-                <rect x="3" y="2.5" width="4" height="11" rx="1" fill="currentColor" />
-                <rect x="9" y="2.5" width="4" height="11" rx="1" fill="currentColor" />
-              </svg>
-            ) : (
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                aria-hidden="true"
-                focusable="false"
-                style={{ display: 'block' }}
-              >
-                <polygon points="4,2.5 13,8 4,13.5" fill="currentColor" />
-              </svg>
-            )}
-            {isPlaying ? 'Pausar' : 'Reproducir'}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSeek(-SEEK_SECONDS)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 9999,
-              border: '1px solid #334155',
-              backgroundColor: '#0f172a',
-              color: '#e2e8f0',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 18 18"
-              aria-hidden="true"
-              focusable="false"
-              style={{ display: 'block' }}
+          <section className="lesson-player">
+            <div
+              style={{
+                borderRadius: 12,
+                overflow: 'hidden',
+                backgroundColor: '#e6e9f8',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
             >
-              <polygon points="8,3 1,9 8,15" fill="currentColor" />
-              <polygon points="16,3 9,9 16,15" fill="currentColor" />
-            </svg>
-            -{SEEK_SECONDS}s
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSeek(SEEK_SECONDS)}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 9999,
-              border: '1px solid #334155',
-              backgroundColor: '#0f172a',
-              color: '#e2e8f0',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 18 18"
-              aria-hidden="true"
-              focusable="false"
-              style={{ display: 'block' }}
+              <video
+                ref={videoRef}
+                src={videoSrc}
+                style={{
+                  width: '100%',
+                  display: 'block',
+                  maxHeight: 520,
+                  objectFit: 'contain',
+                }}
+                preload="auto"
+                controls
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onEnded={() => setIsPlaying(false)}
+              />
+            </div>
+
+            <div
+              style={{
+                marginTop: 14,
+                display: 'flex',
+                gap: 10,
+                flexWrap: 'wrap',
+              }}
             >
-              <polygon points="10,3 17,9 10,15" fill="currentColor" />
-              <polygon points="2,3 9,9 2,15" fill="currentColor" />
-            </svg>
-            +{SEEK_SECONDS}s
-          </button>
+              <button type="button" onClick={handleTogglePlay} className="ui-button ui-button-primary">
+                {isPlaying ? 'Pausar' : 'Reproducir'}
+              </button>
+              <button type="button" onClick={() => handleSeek(-10)} className="ui-button ui-button-secondary">
+                -10s
+              </button>
+              <button type="button" onClick={() => handleSeek(10)} className="ui-button ui-button-secondary">
+                +10s
+              </button>
+            </div>
+          </section>
         </div>
-      </section>
-
-      <section
-        style={{
-          marginTop: 16,
-          backgroundColor: '#0b1220',
-          borderRadius: 12,
-          border: '1px solid #1f2937',
-          padding: 16,
-        }}
-      >
-        <div style={{ fontSize: 14, color: '#94a3b8', marginBottom: 8 }}>
-          Haz clic en el enlace para unirte a mi canal de instagram
-        </div>
-        <a
-          href="https://www.instagram.com/channel/AbbHN4iC8_wasTe2/"
-          style={{
-            color: '#93c5fd',
-            wordBreak: 'break-all',
-            textDecoration: 'none',
-            fontWeight: 600,
-          }}
-        >
-          https://www.instagram.com/channel/AbbHN4iC8_wasTe2/
-        </a>
-      </section>
-
-      <section
-        style={{
-          marginTop: 24,
-          backgroundColor: '#0b1220',
-          borderRadius: 12,
-          border: '1px solid #1f2937',
-          padding: 16,
-        }}
-      >
-        <h2 style={{ fontSize: 18, marginBottom: 10 }}>Tu nota</h2>
-        <textarea
-          value={note}
-          onChange={e => setNote(e.target.value)}
-          placeholder="Escribe lo que piensas sobre el video..."
-          rows={6}
-          style={{
-            width: '100%',
-            padding: 12,
-            borderRadius: 10,
-            border: '1px solid #334155',
-            backgroundColor: '#0f172a',
-            color: '#e2e8f0',
-            fontSize: 14,
-            resize: 'vertical',
-          }}
-        />
-      </section>
+      </div>
     </main>
   );
 }
 
 export default function LessonVideoPage() {
   return (
-    <Suspense
-      fallback={
-        <main
-          style={{
-            padding: 24,
-            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-            maxWidth: 1000,
-            margin: '0 auto',
-            minHeight: '100vh',
-            backgroundColor: '#020617',
-            color: '#e5e7eb',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <div>Loading lesson…</div>
-        </main>
-      }
-    >
+    <Suspense fallback={<div />}>
       <LessonVideoContent />
     </Suspense>
   );
