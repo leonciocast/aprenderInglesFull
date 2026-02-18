@@ -30,7 +30,12 @@ function createTransporter() {
   });
 }
 
-async function sendTestEmail(opts: { toEmail: string; name?: string; pdfUrl: string }) {
+async function sendResourceEmail(opts: {
+  toEmail: string;
+  name?: string;
+  pdfUrl: string;
+  lessonTitle: string;
+}) {
   const fromName = process.env.EMAIL_FROM_NAME || 'AprenderInglesFull';
   const fromEmail = process.env.EMAIL_FROM || 'info@aprenderinglesfull.com';
   const subject = 'Tu PDF de AprenderInglesFull';
@@ -66,7 +71,7 @@ async function sendTestEmail(opts: { toEmail: string; name?: string; pdfUrl: str
                 </h1>
                 <p style="margin:0 0 12px 0; font-size:15px; color:#374151; line-height:1.6;">
                   ¡Gracias por aprender con <strong>AprenderInglesFull</strong>!
-                  Como prometimos, aquí tienes tu recurso en PDF.
+                  Como prometimos, aquí tienes tu PDF <strong>&quot;${opts.lessonTitle}&quot;</strong>.
                 </p>
               </td>
             </tr>
@@ -140,7 +145,7 @@ async function sendTestEmail(opts: { toEmail: string; name?: string; pdfUrl: str
 </html>`;
   const text =
     `Hola ${safeName},\n\n` +
-    `Aquí tienes tu PDF:\n${opts.pdfUrl}\n\n` +
+    `Aquí tienes tu PDF "${opts.lessonTitle}":\n${opts.pdfUrl}\n\n` +
     `AprenderInglesFull\n`;
 
   const transporter = createTransporter();
@@ -215,13 +220,32 @@ export async function POST(req: NextRequest) {
         const base = (process.env.AUTH_BASE_URL || 'https://aprenderinglesfull.com/uploader')
           .replace(/\/$/, '');
         const link = `${base}/api/pdfs/download?file=${encodeURIComponent(filename)}`;
+        const lessonTitle =
+          RESOURCE_TITLE_MAP[resource] || filename.replace(/\.pdf$/i, '');
         console.log(`ManyChat resource "${resource}" -> ${link}`);
 
         const testEmail = process.env.MANYCHAT_TEST_EMAIL || '';
         const sendTest = (process.env.MANYCHAT_SEND_TEST_EMAIL || '').toLowerCase() === 'true';
         if (sendTest && testEmail) {
-          await sendTestEmail({ toEmail: testEmail, name, pdfUrl: link });
+          await sendResourceEmail({
+            toEmail: testEmail,
+            name,
+            pdfUrl: link,
+            lessonTitle,
+          });
           console.log(`ManyChat test email sent to ${testEmail}`);
+        }
+
+        const sendUser =
+          (process.env.MANYCHAT_SEND_USER_EMAIL || '').toLowerCase() === 'true';
+        if (sendUser && email) {
+          await sendResourceEmail({
+            toEmail: email,
+            name,
+            pdfUrl: link,
+            lessonTitle,
+          });
+          console.log(`ManyChat resource email sent to ${email}`);
         }
       } else {
         console.log(`ManyChat resource "${resource}" has no PDF mapping yet.`);
