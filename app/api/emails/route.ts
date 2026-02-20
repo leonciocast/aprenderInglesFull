@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAdminRequest } from '@/app/lib/admin-session';
 
 export const runtime = 'nodejs';
 
@@ -67,8 +68,7 @@ async function runBooktolQuery(sql: string) {
 
 export async function GET(req: NextRequest) {
   try {
-    const password = req.headers.get('x-admin-password');
-    if (!password || password !== process.env.EMAILS_ADMIN_PASSWORD) {
+    if (!isAdminRequest(req)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

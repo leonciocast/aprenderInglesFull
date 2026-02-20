@@ -20,6 +20,24 @@ function isValidEmail(email: string) {
   return email.includes('@') && email.includes('.');
 }
 
+async function fetchResourceMapping(slug: string) {
+  if (!slug) return null;
+  const sql = `
+    SELECT slug, title, file
+    FROM resource_mappings
+    WHERE slug = '${sqlString(slug)}'
+    LIMIT 1
+  `;
+  const rows = coerceRows(await runBooktolQuery(sql));
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    slug: String(row.slug || slug),
+    title: String(row.title || '').trim(),
+    file: String(row.file || '').trim(),
+  };
+}
+
 function createTransporter() {
   return nodemailer.createTransport({
     host: process.env.SES_SMTP_HOST,
@@ -217,13 +235,16 @@ export async function POST(req: NextRequest) {
     const existingId = Number(lookupRows[0]?.id || 0);
 
     if (resource) {
-      const filename = RESOURCE_PDF_MAP[resource];
+      const dbMapping = await fetchResourceMapping(resource);
+      const filename = dbMapping?.file || RESOURCE_PDF_MAP[resource];
+      const lessonTitle =
+        dbMapping?.title ||
+        RESOURCE_TITLE_MAP[resource] ||
+        (filename ? filename.replace(/\.pdf$/i, '') : '');
       if (filename) {
         const base = (process.env.AUTH_BASE_URL || 'https://aprenderinglesfull.com/uploader')
           .replace(/\/$/, '');
         const link = `${base}/api/pdfs/download?file=${encodeURIComponent(filename)}`;
-        const lessonTitle =
-          RESOURCE_TITLE_MAP[resource] || filename.replace(/\.pdf$/i, '');
         console.log(`ManyChat resource "${resource}" -> ${link}`);
 
         const testEmail = process.env.MANYCHAT_TEST_EMAIL || '';

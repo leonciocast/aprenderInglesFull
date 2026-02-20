@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3';
+import { isAdminRequest } from '@/app/lib/admin-session';
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION!,
@@ -19,8 +20,7 @@ type PdfItem = {
 
 export async function GET(req: NextRequest) {
   try {
-    const password = req.headers.get('x-admin-password');
-    if (!password || password !== process.env.EMAILS_ADMIN_PASSWORD) {
+    if (!isAdminRequest(req)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

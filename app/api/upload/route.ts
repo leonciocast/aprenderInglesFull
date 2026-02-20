@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { isUploaderRequest } from '@/app/lib/uploader-session';
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION!,
@@ -15,8 +16,7 @@ export const runtime = 'nodejs';
 export async function POST(req: NextRequest) {
   try {
     // Simple admin protection
-    const password = req.headers.get('x-admin-password');
-    if (!password || password !== process.env.ADMIN_UPLOAD_PASSWORD) {
+    if (!isUploaderRequest(req)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

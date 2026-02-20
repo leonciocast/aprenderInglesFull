@@ -1331,6 +1331,23 @@ button {
   align-items: flex-end;
 }
 
+.emails-toolbar__left {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.emails-login {
+  max-width: 420px;
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.emails-login h3 {
+  margin: 0;
+}
+
 .emails-label {
   display: grid;
   gap: 6px;
@@ -1348,6 +1365,47 @@ button {
 
 .emails-card {
   padding: 16px;
+}
+
+.emails-shell {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.emails-side {
+  background: #ffffff;
+  border: 1px solid #ece9f8;
+  border-radius: 16px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  height: fit-content;
+  position: sticky;
+  top: 24px;
+  box-shadow: 0 12px 24px rgba(46, 61, 104, 0.08);
+}
+
+.emails-tab {
+  border: 1px solid transparent;
+  background: #f7f8ff;
+  color: #2f3b52;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.emails-tab.is-active {
+  border-color: rgba(47, 87, 239, 0.3);
+  background: #eef1ff;
+  color: #1d2a5a;
+}
+
+.emails-main {
+  min-width: 0;
 }
 
 .emails-card__title {
@@ -1389,22 +1447,50 @@ button {
 }
 
 .emails-table {
-  overflow-x: auto;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.emails-table__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.emails-table__count {
+  font-size: 12px;
+  color: #6b7385;
+  background: #f1f5ff;
+  border: 1px solid #e3e7f7;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+.emails-table__search {
+  min-width: 260px;
+}
+
+.emails-table__scroller {
+  max-height: 520px;
+  overflow: auto;
+  border: 1px solid #ece9f8;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 18px 36px rgba(46, 61, 104, 0.08);
 }
 
 .emails-table__table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #e6e3f1;
   background: #ffffff;
-  border-radius: 12px;
-  overflow: hidden;
 }
 
 .emails-table__table th,
 .emails-table__table td {
   text-align: left;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-bottom: 1px solid #eef0f7;
   font-size: 13px;
   color: #273041;
@@ -1413,10 +1499,29 @@ button {
 .emails-table__table thead th {
   background: #f3f5ff;
   font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .emails-table__table tbody tr:nth-child(even) {
   background: #fafbff;
+}
+
+.emails-table__sort {
+  border: none;
+  background: transparent;
+  font-weight: 700;
+  color: #1f2a44;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.emails-table__sort span {
+  font-size: 11px;
+  color: #64748b;
 }
 
 .emails-actions {
@@ -1487,6 +1592,20 @@ button {
   gap: 8px;
 }
 
+.emails-modal__section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e6e3f1;
+  display: grid;
+  gap: 10px;
+}
+
+.emails-modal__section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2a44;
+}
+
 .emails-modal__item {
   width: 100%;
   text-align: left;
@@ -1506,6 +1625,45 @@ button {
 .emails-modal__item-meta {
   font-size: 12px;
   color: #6b7385;
+}
+
+.emails-resource-url {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(87, 104, 255, 0.12), rgba(141, 154, 255, 0.16));
+  border: 1px solid rgba(120, 133, 255, 0.35);
+  display: grid;
+  gap: 10px;
+}
+
+.emails-resource-url__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2b3354;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.emails-resource-url__row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.emails-resource-url__value {
+  flex: 1;
+  min-width: 220px;
+  display: block;
+  font-size: 13px;
+  color: #1f253a;
+  background: #fff;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(120, 133, 255, 0.35);
+  box-shadow: 0 10px 22px rgba(70, 84, 180, 0.08);
+  word-break: break-all;
 }
 
 .uploader-panel {
@@ -1538,6 +1696,46 @@ button {
   background: #f6f8ff;
   font-size: 13px;
   color: #273041;
+}
+
+.uploader-file--hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.uploader-dropzone {
+  border: 2px dashed rgba(118, 130, 255, 0.35);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 28px;
+  border-radius: 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  position: relative;
+}
+
+.uploader-dropzone.is-dragover {
+  border-color: rgba(90, 103, 255, 0.9);
+  box-shadow: 0 18px 40px rgba(90, 103, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.uploader-dropzone__title {
+  font-weight: 700;
+  color: #2d3359;
+  font-size: 1.1rem;
+}
+
+.uploader-dropzone__hint {
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 0.95rem;
 }
 
 .uploader-section {
@@ -2055,6 +2253,28 @@ button {
   color: var(--admin-ink);
   min-height: 100vh;
   padding: 32px 20px 60px;
+}
+
+.admin-dashboard--compact {
+  padding-top: 0;
+}
+
+.admin-dashboard--compact .admin-layout {
+  margin-top: 0;
+}
+
+.admin-dashboard--compact .admin-content {
+  padding-top: 0;
+  align-content: start;
+}
+
+.admin-dashboard--compact .admin-sidebar {
+  margin-top: 0;
+}
+
+.admin-dashboard--compact .admin-layout {
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .admin-hero {

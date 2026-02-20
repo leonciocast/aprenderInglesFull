@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
 import nodemailer from 'nodemailer';
+import { isAdminRequest } from '@/app/lib/admin-session';
 
 export const runtime = 'nodejs';
 
@@ -72,24 +73,13 @@ function buildHtmlEmail(opts: {
                 <img src="${logoUrl}" alt="AprenderInglesFull Logo"
                      style="max-width:180px; width:180px; display:block; margin:0 auto 10px auto;" />
                 <div style="color:#e0e7ff; font-family:Arial,sans-serif; font-size:13px;">
-                  Learn English with clarity, confidence, and fun.
+                  Aprende inglés con claridad, confianza y diversión.
                 </div>
               </td>
             </tr>
 
             <tr>
               <td style="padding:24px 24px 8px 24px; font-family:Arial,sans-serif;">
-                <h1 style="margin:0 0 12px 0; font-size:24px; color:#111827; text-align:left;">
-                  Hi ${opts.safeName}! 🎉
-                </h1>
-                <p style="margin:0 0 12px 0; font-size:15px; color:#374151; line-height:1.6;">
-                  Thank you for learning with <strong>AprenderInglesFull</strong>!
-                  As promised, here is your PDF <strong>&quot;${opts.lessonTitle}&quot;</strong>.
-                </p>
-                <p style="margin:0 0 16px 0; font-size:15px; color:#374151; line-height:1.6;">
-                  This resource will help you practice vocabulary, pronunciation, and
-                  build strong English habits one step at a time.
-                </p>
                 ${opts.customMessageHtml}
               </td>
             </tr>
@@ -99,23 +89,11 @@ function buildHtmlEmail(opts: {
                 <a href="${opts.pdfUrlUtm}"
                    style="display:inline-block; padding:14px 32px; background-color:#2563eb; color:#ffffff;
                           text-decoration:none; border-radius:9999px; font-weight:bold; font-size:16px;">
-                  📘 Download your PDF
+                  📘 Descargar tu PDF
                 </a>
                 <p style="margin:12px 0 0 0; font-size:12px; color:#6b7280;">
-                  If the button doesn’t work, copy and paste this link into your browser:<br>
+                  Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
                   <span style="word-break:break-all; color:#2563eb;">${opts.pdfUrlUtm}</span>
-                </p>
-              </td>
-            </tr>
-
-            <tr>
-              <td style="padding:0 24px 24px 24px; font-family:Arial,sans-serif;">
-                <p style="margin:0 0 10px 0; font-size:14px; color:#374151; line-height:1.6;">
-                  Over the next days, I’ll send you short lessons, tips, and exercises
-                  to help you speak more natural English in real life.
-                </p>
-                <p style="margin:0; font-size:14px; color:#374151; line-height:1.6;">
-                  If you have any questions, just reply to this email — I read every message. 😊
                 </p>
               </td>
             </tr>
@@ -162,11 +140,11 @@ function buildHtmlEmail(opts: {
                 </table>
 
                 <p style="margin:16px 0 0 0; font-size:11px; color:#9ca3af; line-height:1.5;">
-                  © ${year} AprenderInglesFull. All rights reserved.<br>
-                  You received this email because you requested a resource from AprenderInglesFull.
-                  If you didn't request it, you can safely ignore this message.<br>
+                  © ${year} AprenderInglesFull. Todos los derechos reservados.<br>
+                  Recibiste este correo porque solicitaste un recurso de AprenderInglesFull.
+                  Si no lo solicitaste, puedes ignorar este mensaje con tranquilidad.<br>
                   <a href="${opts.unsubscribeUrl}" style="color:#6b7280; text-decoration:underline;">
-                    Unsubscribe
+                    Cancelar suscripción
                   </a>
                 </p>
               </td>
@@ -188,21 +166,15 @@ function buildTextEmail(opts: {
 }) {
   const message = opts.message ? `\n\n${opts.message}\n\n` : '\n\n';
   return (
-    `Hi ${opts.name},\n\n` +
-    `Here is your PDF "${opts.lessonTitle}":\n${opts.pdfUrlUtm}${message}` +
-    `Over the next days, I’ll send you short lessons, tips and exercises\n` +
-    `to help you speak more natural English.\n\n` +
-    `Best regards,\nTomás\nAprenderInglesFull.com\n\n` +
-    `Unsubscribe: ${opts.unsubscribeUrl}\n\n` +
-    `You received this email because you requested a resource from AprenderInglesFull.\n` +
-    `If you didn't request it, you can ignore this message.`
+    `${message.trim()}\n\n` +
+    `PDF: ${opts.lessonTitle}\n${opts.pdfUrlUtm}\n\n` +
+    `Cancelar suscripción: ${opts.unsubscribeUrl}`
   );
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const password = req.headers.get('x-admin-password');
-    if (!password || password !== process.env.EMAILS_ADMIN_PASSWORD) {
+    if (!isAdminRequest(req)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

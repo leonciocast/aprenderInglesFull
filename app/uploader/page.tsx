@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AdminShell from '../admin/AdminShell';
 
 type LocalFile = {
@@ -22,18 +22,65 @@ const SOCIAL_BASE_URL = 'https://aprenderinglesfull.com/lesson.php';
 export default function UploaderPage() {
   const [files, setFiles] = useState<LocalFile[]>([]);
   const [password, setPassword] = useState('');
+  const [authed, setAuthed] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [uploaded, setUploaded] = useState<UploadedFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files;
-    if (!selected) return;
+  useEffect(() => {
+    const hydrateAuth = async () => {
+      try {
+        const res = await fetch('/uploader/api/upload/session');
+        const data = await res.json();
+        if (res.ok && data?.ok) {
+          setAuthed(true);
+        }
+      } catch {
+        setAuthed(false);
+      }
+    };
+    hydrateAuth();
+  }, []);
+
+  const login = async () => {
+    try {
+      setAuthError(null);
+      const res = await fetch('/uploader/api/upload/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+      setAuthed(true);
+    } catch (err: any) {
+      setAuthed(false);
+      setAuthError(err.message || String(err));
+    }
+  };
+
+  const logout = async () => {
+    await fetch('/uploader/api/upload/session', { method: 'DELETE' });
+    setAuthed(false);
+    setPassword('');
+    setFiles([]);
+    setUploaded([]);
+    setError(null);
+  };
+
+  const handleFiles = (selected: FileList | File[]) => {
+    if (!selected || selected.length === 0) return;
 
     const arr: LocalFile[] = [];
     for (let i = 0; i < selected.length; i++) {
-      const f = selected[i];
+      const f = selected[i] as File;
+      if (!f || f.type !== 'application/pdf') continue;
 
       // default filename: spaces -> underscores
       const defaultName = f.name.replace(/\s+/g, '_');
@@ -52,6 +99,26 @@ export default function UploaderPage() {
     setUploaded([]);
     setError(null);
   };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files;
+    if (!selected) return;
+    handleFiles(selected);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (!e.dataTransfer?.files?.length) return;
+    handleFiles(e.dataTransfer.files);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => setDragOver(false);
 
   const handleNameChange = (index: number, newName: string) => {
     // force underscores for spaces
@@ -85,9 +152,6 @@ export default function UploaderPage() {
       // IMPORTANT: no leading slash so it respects basePath (/uploader)
       const res = await fetch('api/upload', {
         method: 'POST',
-        headers: {
-          'x-admin-password': password,
-        },
         body: formData,
       });
 
@@ -123,34 +187,68 @@ export default function UploaderPage() {
   };
 
   return (
-    <AdminShell
-      title="Lesson PDF Uploader"
-      description="Upload lesson PDFs to S3/CloudFront and generate shareable links."
-    >
+    <AdminShell hideHero hidePanelHeader>
       <section className="admin-panel uploader-panel">
-        <div className="uploader-toolbar">
-          <label className="uploader-label">
-            Admin password:
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="ui-input uploader-input"
-            />
-          </label>
-          <label className="uploader-label">
-            PDF files:
-            <input
-              type="file"
-              multiple
-              accept="application/pdf"
-              onChange={handleFileChange}
-              className="uploader-file"
-            />
-          </label>
-        </div>
+        {!authed ? (
+          <div className="emails-login uploader-login">
+            <div className="emails-login__card">
+              <h2>Ingresa tu contraseña para acceder.</h2>
+              <label className="emails-login__label">
+                Contraseña:
+                <input
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="ui-input"
+                />
+              </label>
+              {authError && <p className="emails-login__error">{authError}</p>}
+              <button className="ui-button ui-button-primary" onClick={login}>
+                Entrar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="emails-toolbar uploader-toolbar">
+              <div className="emails-toolbar__left">
+                <button className="ui-button ui-button-outline" onClick={logout}>
+                  Logout
+                </button>
+              </div>
+            </div>
 
-        {files.length > 0 && (
+            <div className="uploader-toolbar">
+              <div
+                className={`uploader-dropzone ${dragOver ? 'is-dragover' : ''}`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onClick={() => fileInputRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
+                }}
+              >
+                <div className="uploader-dropzone__title">Arrastra tus PDFs aqui</div>
+                <div className="uploader-dropzone__hint">
+                  o haz click para seleccionar archivos
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="application/pdf"
+                  onChange={handleFileChange}
+                  className="uploader-file uploader-file--hidden"
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {authed && files.length > 0 && (
           <section className="uploader-section">
             <h3>Rename files & set lesson titles:</h3>
             {files.map((item, idx) => (
@@ -183,7 +281,7 @@ export default function UploaderPage() {
 
             <button
               onClick={handleUpload}
-              disabled={loading || !password || files.length === 0}
+              disabled={loading || files.length === 0}
               className="ui-button ui-button-primary"
             >
               {loading ? 'Uploading…' : 'Upload to S3'}
@@ -191,9 +289,9 @@ export default function UploaderPage() {
           </section>
         )}
 
-        {error && <p className="uploader-error">Error: {error}</p>}
+        {authed && error && <p className="uploader-error">Error: {error}</p>}
 
-        {uploaded.length > 0 && (
+        {authed && uploaded.length > 0 && (
           <section className="uploader-section">
             <h3>Uploaded files</h3>
             <ul className="uploader-list">

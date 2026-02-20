@@ -42,31 +42,41 @@ type AdminShellProps = {
   title: string;
   description?: string;
   children: ReactNode;
+  hideHero?: boolean;
+  hidePanelHeader?: boolean;
 };
 
-export default function AdminShell({ title, description, children }: AdminShellProps) {
+export default function AdminShell({
+  title,
+  description,
+  children,
+  hideHero = false,
+  hidePanelHeader = false,
+}: AdminShellProps) {
   const pathname = usePathname();
 
   return (
-    <div className="admin-dashboard">
-      <section className="admin-hero">
-        <div className="admin-hero__glow" aria-hidden="true" />
-        <div className="admin-hero__card">
-          <div className="admin-hero__profile">
-            <div className="admin-hero__avatar">JD</div>
-            <div>
-              <div className="admin-hero__name">Admin</div>
-              <div className="admin-hero__rating">
-                <span aria-hidden="true">★★★★★</span>
-                <span className="admin-hero__rating-count">(15 Reviews)</span>
+    <div className={`admin-dashboard${hideHero ? ' admin-dashboard--compact' : ''}`}>
+      {!hideHero && (
+        <section className="admin-hero">
+          <div className="admin-hero__glow" aria-hidden="true" />
+          <div className="admin-hero__card">
+            <div className="admin-hero__profile">
+              <div className="admin-hero__avatar">JD</div>
+              <div>
+                <div className="admin-hero__name">Admin</div>
+                <div className="admin-hero__rating">
+                  <span aria-hidden="true">★★★★★</span>
+                  <span className="admin-hero__rating-count">(15 Reviews)</span>
+                </div>
               </div>
             </div>
+            <Link className="admin-hero__button" href="/admin/courses">
+              Create a New Course
+            </Link>
           </div>
-          <Link className="admin-hero__button" href="/admin/courses">
-            Create a New Course
-          </Link>
-        </div>
-      </section>
+        </section>
+      )}
 
       <div className="admin-layout">
         <aside className="admin-sidebar">
@@ -105,13 +115,15 @@ export default function AdminShell({ title, description, children }: AdminShellP
         </aside>
 
         <main className="admin-content">
-          <section className="admin-panel">
-            <div className="admin-panel__header">
-              <h2>{title}</h2>
-              <span className="admin-panel__meta">Admin</span>
-            </div>
-            {description && <p className="ui-muted">{description}</p>}
-          </section>
+          {!hidePanelHeader && (
+            <section className="admin-panel">
+              <div className="admin-panel__header">
+                <h2>{title}</h2>
+                <span className="admin-panel__meta">Admin</span>
+              </div>
+              {description && <p className="ui-muted">{description}</p>}
+            </section>
+          )}
           {children}
         </main>
       </div>
