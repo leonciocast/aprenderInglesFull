@@ -187,7 +187,7 @@ export default function UploaderPage() {
   };
 
   return (
-    <AdminShell hideHero hidePanelHeader>
+    <AdminShell title="Uploader" hideHero hidePanelHeader>
       <section className="admin-panel uploader-panel">
         {!authed ? (
           <div className="emails-login uploader-login">
