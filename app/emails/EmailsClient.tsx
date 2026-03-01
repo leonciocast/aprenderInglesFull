@@ -53,6 +53,8 @@ export default function EmailsClient() {
   const [resourceTitle, setResourceTitle] = useState('');
   const [resourceFile, setResourceFile] = useState('');
   const [resourceUrl, setResourceUrl] = useState('');
+  const [manychatTestMode, setManychatTestMode] = useState(false);
+  const [manychatModeLoading, setManychatModeLoading] = useState(false);
   const [tableSearch, setTableSearch] = useState('');
   const [sortKey, setSortKey] = useState<'name' | 'email' | 'source' | 'created_at'>(
     'created_at',
@@ -75,6 +77,12 @@ export default function EmailsClient() {
     hydrateAuth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!authed || activeTab !== 'manychat') return;
+    loadManychatMode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed, activeTab]);
 
   const fetchEmails = async () => {
     try {
@@ -261,6 +269,46 @@ export default function EmailsClient() {
     }
   };
 
+  const loadManychatMode = async () => {
+    try {
+      setManychatModeLoading(true);
+      const res = await fetch('/uploader/api/manychat/mode', {
+        headers: password ? { 'x-admin-password': password } : undefined,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to load ManyChat mode');
+      }
+      setManychatTestMode(Boolean(data?.enabled));
+    } catch (err: any) {
+      setResourceError(err.message || String(err));
+    } finally {
+      setManychatModeLoading(false);
+    }
+  };
+
+  const setManychatMode = async (enabled: boolean) => {
+    try {
+      setManychatModeLoading(true);
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (password) headers['x-admin-password'] = password;
+      const res = await fetch('/uploader/api/manychat/mode', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update ManyChat mode');
+      }
+      setManychatTestMode(Boolean(data?.enabled));
+    } catch (err: any) {
+      setResourceError(err.message || String(err));
+    } finally {
+      setManychatModeLoading(false);
+    }
+  };
+
   const openPdfModal = () => {
     setShowPdfModal(true);
     setPdfSearch('');
@@ -269,6 +317,7 @@ export default function EmailsClient() {
     setResourceFile('');
     loadPdfs();
     loadResources();
+    loadManychatMode();
   };
 
   const selectPdf = (key: string) => {
@@ -569,6 +618,31 @@ export default function EmailsClient() {
           {activeTab === 'manychat' && (
             <div className="emails-card ui-card">
               <div className="emails-card__title">Recursos de ManyChat</div>
+              <div className="emails-mode-card">
+                <div>
+                  <div className="emails-mode-card__title">Modo de envío ManyChat</div>
+                  <div className="emails-mode-card__meta">
+                    {manychatTestMode
+                      ? 'TEST: envía al correo de prueba'
+                      : 'PRODUCCIÓN: envía al usuario final'}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className={`emails-mode-toggle ${manychatTestMode ? 'is-on' : ''}`}
+                  onClick={() => setManychatMode(!manychatTestMode)}
+                  disabled={manychatModeLoading}
+                  aria-pressed={manychatTestMode}
+                >
+                  <span className="emails-mode-toggle__state">
+                    {manychatModeLoading ? 'Guardando...' : manychatTestMode ? 'TEST' : 'PROD'}
+                  </span>
+                  <span className="emails-mode-toggle__track" aria-hidden="true">
+                    <span className="emails-mode-toggle__thumb" />
+                  </span>
+                </button>
+              </div>
+              <div className="emails-mode-divider" />
               <div className="emails-row">
                 <button
                   type="button"

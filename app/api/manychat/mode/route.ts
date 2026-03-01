@@ -4,6 +4,12 @@ import { isAdminRequest } from '@/app/lib/admin-session';
 
 export const runtime = 'nodejs';
 
+const CONFIG_SLUG = '__config_manychat_test_mode';
+
+function envDefault() {
+  return (process.env.MANYCHAT_SEND_TEST_EMAIL || '').toLowerCase() === 'true';
+}
+
 export async function GET(req: NextRequest) {
   try {
     if (!isAdminRequest(req)) {
@@ -11,15 +17,17 @@ export async function GET(req: NextRequest) {
     }
 
     const sql = `
-      SELECT id, slug, title, file, created_at
+      SELECT file
       FROM resource_mappings
-      WHERE slug NOT LIKE '__config_%'
-      ORDER BY created_at DESC
+      WHERE slug = '${sqlString(CONFIG_SLUG)}'
+      LIMIT 1
     `;
     const rows = coerceRows(await runBooktolQuery(sql));
-    return NextResponse.json({ rows });
+    const raw = String(rows[0]?.file || '').trim().toLowerCase();
+    const enabled = raw ? raw === 'true' : envDefault();
+    return NextResponse.json({ enabled });
   } catch (err: any) {
-    console.error('Resources GET error:', err);
+    console.error('ManyChat mode GET error:', err);
     return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
   }
 }
@@ -31,25 +39,23 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const slug = String(body?.slug || '').trim().toLowerCase();
-    const title = String(body?.title || '').trim();
-    const file = String(body?.file || '').trim();
-
-    if (!slug || !title || !file) {
-      return NextResponse.json({ error: 'Missing slug, title, or file.' }, { status: 400 });
-    }
+    const enabled = Boolean(body?.enabled);
 
     const upsertSql = `
       INSERT INTO resource_mappings (slug, title, file)
-      VALUES ('${sqlString(slug)}', '${sqlString(title)}', '${sqlString(file)}')
+      VALUES (
+        '${sqlString(CONFIG_SLUG)}',
+        'ManyChat test mode config',
+        '${enabled ? 'true' : 'false'}'
+      )
       ON CONFLICT (slug)
-      DO UPDATE SET title = EXCLUDED.title, file = EXCLUDED.file
-      RETURNING id, slug, title, file, created_at
+      DO UPDATE SET file = EXCLUDED.file
+      RETURNING slug, file
     `;
-    const rows = coerceRows(await runBooktolQuery(upsertSql));
-    return NextResponse.json({ row: rows[0] });
+    await runBooktolQuery(upsertSql);
+    return NextResponse.json({ ok: true, enabled });
   } catch (err: any) {
-    console.error('Resources POST error:', err);
+    console.error('ManyChat mode POST error:', err);
     return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
   }
 }

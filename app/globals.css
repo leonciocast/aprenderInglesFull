@@ -1736,6 +1736,99 @@ button {
   word-break: break-all;
 }
 
+.emails-mode-card {
+  margin: 6px 0 8px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #dfe5ff;
+  background: linear-gradient(135deg, rgba(238, 241, 255, 0.9), rgba(246, 248, 255, 0.95));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.emails-mode-card__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2a44;
+}
+
+.emails-mode-card__meta {
+  font-size: 12px;
+  color: #6b7385;
+}
+
+.emails-mode-divider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(47, 87, 239, 0), rgba(47, 87, 239, 0.25), rgba(47, 87, 239, 0));
+  margin: 2px 0 14px;
+}
+
+.emails-mode-toggle {
+  min-width: 164px;
+  border: 1px solid #d7ddfb;
+  background: #ffffff;
+  color: #374151;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.emails-mode-toggle.is-on {
+  border-color: #2563eb;
+  background: #eef3ff;
+  color: #1d4ed8;
+}
+
+.emails-mode-toggle__state {
+  min-width: 62px;
+  text-align: left;
+  letter-spacing: 0.02em;
+}
+
+.emails-mode-toggle__track {
+  width: 52px;
+  height: 28px;
+  border-radius: 999px;
+  background: #cfd8ff;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(47, 87, 239, 0.15);
+  transition: background-color 0.2s ease;
+}
+
+.emails-mode-toggle__thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #ffffff;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  box-shadow: 0 4px 10px rgba(30, 41, 59, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.emails-mode-toggle.is-on .emails-mode-toggle__track {
+  background: linear-gradient(90deg, #2f57ef 0%, #8d77ff 100%);
+}
+
+.emails-mode-toggle.is-on .emails-mode-toggle__thumb {
+  transform: translateX(24px);
+}
+
+.emails-mode-toggle:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .uploader-panel {
   display: grid;
   gap: 16px;

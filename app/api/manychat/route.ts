@@ -20,6 +20,41 @@ function isValidEmail(email: string) {
   return email.includes('@') && email.includes('.');
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function sanitizeLeadName(raw: string) {
+  const trimmed = String(raw || '').trim();
+  if (!trimmed) return '';
+
+  const lower = trimmed.toLowerCase();
+  const hasUrl = /https?:\/\/|www\.|\.com|\.net|\.org|\.io|t\.me|bit\.ly/i.test(lower);
+  const hasWalletSpam = /(bitcoin|btc|eth|balance|wallet|profit|trx|usdt|binance|coin)/i.test(
+    lower,
+  );
+  const hasSuspiciousChars = /[<>`{}[\]|\\]/.test(trimmed);
+  const hasEmojiFlood = /[\u{1F300}-\u{1FAFF}]/u.test(trimmed);
+
+  if (hasUrl || hasWalletSpam || hasSuspiciousChars || hasEmojiFlood) {
+    return '';
+  }
+
+  const cleaned = trimmed
+    .replace(/\s+/g, ' ')
+    .replace(/[^A-Za-zÀ-ÿ' -]/g, '')
+    .trim();
+
+  if (!cleaned) return '';
+  if (cleaned.length < 2 || cleaned.length > 60) return '';
+  return cleaned;
+}
+
 async function fetchResourceMapping(slug: string) {
   if (!slug) return null;
   const sql = `
@@ -36,6 +71,19 @@ async function fetchResourceMapping(slug: string) {
     title: String(row.title || '').trim(),
     file: String(row.file || '').trim(),
   };
+}
+
+async function getManychatTestMode() {
+  const sql = `
+    SELECT file
+    FROM resource_mappings
+    WHERE slug = '__config_manychat_test_mode'
+    LIMIT 1
+  `;
+  const rows = coerceRows(await runBooktolQuery(sql));
+  const raw = String(rows[0]?.file || '').trim().toLowerCase();
+  if (!raw) return null;
+  return raw === 'true';
 }
 
 function createTransporter() {
@@ -59,7 +107,8 @@ async function sendResourceEmail(opts: {
   const fromName = process.env.EMAIL_FROM_NAME || 'AprenderInglesFull';
   const fromEmail = process.env.EMAIL_FROM || 'info@aprenderinglesfull.com';
   const subject = 'Tu PDF de AprenderInglesFull';
-  const safeName = (opts.name || 'Student').trim() || 'Student';
+  const safeName = sanitizeLeadName(opts.name || '') || 'Student';
+  const safeNameHtml = escapeHtml(safeName);
 
   const logoUrl = 'https://cdn.aprenderinglesfull.com/logo_ingles.png';
   const instagramUrl = 'https://instagram.com/aprendeinglesfull';
@@ -87,7 +136,7 @@ async function sendResourceEmail(opts: {
             <tr>
               <td style="padding:24px 24px 8px 24px; font-family:Arial,sans-serif;">
                 <h1 style="margin:0 0 12px 0; font-size:24px; color:#111827; text-align:left;">
-                  ¡Hola ${safeName}! 🎉
+                  ¡Hola ${safeNameHtml}! 🎉
                 </h1>
                 <p style="margin:0 0 12px 0; font-size:15px; color:#374151; line-height:1.6;">
                   ¡Gracias por aprender con <strong>AprenderInglesFull</strong>!
@@ -211,7 +260,8 @@ export async function POST(req: NextRequest) {
 
     const body = await readBody(req);
     const email = String(body?.email || body?.user_email || '').trim().toLowerCase();
-    const name = String(body?.name || body?.full_name || '').trim();
+    const rawName = String(body?.name || body?.full_name || '').trim();
+    const name = sanitizeLeadName(rawName);
     const source = String(body?.source || 'manychat_instagram').trim();
     const resourceRaw =
       req.nextUrl.searchParams.get('resource') ||
@@ -248,7 +298,11 @@ export async function POST(req: NextRequest) {
         console.log(`ManyChat resource "${resource}" -> ${link}`);
 
         const testEmail = process.env.MANYCHAT_TEST_EMAIL || '';
-        const sendTest = (process.env.MANYCHAT_SEND_TEST_EMAIL || '').toLowerCase() === 'true';
+        const dbTestMode = await getManychatTestMode().catch(() => null);
+        const sendTest =
+          dbTestMode === null
+            ? (process.env.MANYCHAT_SEND_TEST_EMAIL || '').toLowerCase() === 'true'
+            : dbTestMode;
         if (sendTest && testEmail) {
           await sendResourceEmail({
             toEmail: testEmail,
