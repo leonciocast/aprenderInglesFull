@@ -86,7 +86,7 @@ function buildHtmlEmail(opts: {
 
             <tr>
               <td align="center" style="padding:0 24px 24px 24px; font-family:Arial,sans-serif;">
-                <a href="${opts.pdfUrlUtm}"
+                <a href=https://www.amazon.com/dp/B0GS1KXBHC
                    style="display:inline-block; padding:14px 32px; background-color:#2563eb; color:#ffffff;
                           text-decoration:none; border-radius:9999px; font-weight:bold; font-size:16px;">
                   📘 Descargar tu PDF
